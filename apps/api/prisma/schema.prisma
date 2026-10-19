@@ -1,0 +1,470 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Village {
+  id          String   @id @default(uuid())
+  name        String
+  district    String
+  taluk       String
+  pincode     String
+  latitude    Decimal  @db.Decimal(9, 6)
+  longitude   Decimal  @db.Decimal(9, 6)
+  population  Int
+  wardCount   Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  collectionPoints CollectionPoint[]
+  citizenReports   CitizenReport[]
+  collectionSchedules CollectionSchedule[]
+
+  @@map("villages")
+}
+
+model CollectionPoint {
+  id          String   @id @default(uuid())
+  villageId   String
+  village     Village  @relation(fields: [villageId], references: [id])
+  name        String
+  address     String
+  latitude    Decimal  @db.Decimal(9, 6)
+  longitude   Decimal  @db.Decimal(9, 6)
+  wasteStreams String[]
+  isActive    Boolean  @default(true)
+  lastCollectedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bins         Bin[]
+  wasteBatches WasteBatch[]
+  routeStops   RouteStop[]
+  citizenReports CitizenReport[]
+
+  @@map("collection_points")
+}
+
+model Bin {
+  id                String   @id @default(uuid())
+  collectionPointId String
+  collectionPoint   CollectionPoint @relation(fields: [collectionPointId], references: [id])
+  serialNumber      String   @unique
+  wasteStream       String
+  capacityLitres    Decimal  @db.Decimal(8, 2)
+  fillLevel         String   @default("EMPTY")
+  fillPercent       Int      @default(0)
+  lastReadingAt     DateTime?
+  sensorDeviceId    String?
+  isActive          Boolean  @default(true)
+  updatedAt         DateTime @updatedAt
+
+  @@map("bins")
+}
+
+model Vehicle {
+  id                 String   @id @default(uuid())
+  registrationNumber String   @unique
+  type               String
+  capacityKg         Decimal  @db.Decimal(8, 2)
+  currentLoadKg      Decimal  @db.Decimal(8, 2) @default(0)
+  driverName         String
+  driverPhone        String
+  isAvailable        Boolean  @default(true)
+  depotVillageId     String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  routePlans RoutePlan[]
+  dispatches Dispatch[]
+
+  @@map("vehicles")
+}
+
+model WeighingDevice {
+  id               String   @id @default(uuid())
+  serialNumber     String   @unique
+  location         String
+  isOnline         Boolean  @default(false)
+  lastPingAt       DateTime?
+  calibratedAt     DateTime?
+  isSimulated      Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  readings         DeviceReading[]
+
+  @@map("weighing_devices")
+}
+
+model DeviceReading {
+  id               String   @id @default(uuid())
+  deviceId         String
+  device           WeighingDevice @relation(fields: [deviceId], references: [id])
+  weightKg         Decimal  @db.Decimal(8, 3)
+  isStable         Boolean
+  source           String   // SENSOR | SIMULATED | MANUAL
+  recordedAt       DateTime @default(now())
+
+  @@map("device_readings")
+}
+
+model WasteBatch {
+  id                String   @id @default(uuid())
+  batchCode         String   @unique
+  qrToken           String   @unique
+  collectionPointId String
+  collectionPoint   CollectionPoint @relation(fields: [collectionPointId], references: [id])
+  wasteStream       String
+  materialSubtype   String?
+  grossWeightKg     Decimal  @db.Decimal(8, 3)
+  tareWeightKg      Decimal  @db.Decimal(8, 3) @default(0)
+  netWeightKg       Decimal  @db.Decimal(8, 3)
+  weightSource      String
+  status            String   @default("CREATED")
+  workerName        String
+  collectedAt       DateTime
+  notes             String?
+  photoUrl          String?
+  deviceId          String?
+  calibrationStatus String?
+  clientOperationId String?  @unique
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  events           BatchEvent[]
+  inspection       QualityInspection?
+  inventoryMoves   InventoryMovement[]
+  dispatchBatches  DispatchBatch[]
+
+  @@index([status])
+  @@index([collectionPointId])
+  @@index([wasteStream, materialSubtype])
+  @@map("waste_batches")
+}
+
+model BatchEvent {
+  id          String   @id @default(uuid())
+  batchId     String
+  batch       WasteBatch @relation(fields: [batchId], references: [id])
+  eventType   String
+  fromStatus  String?
+  toStatus    String
+  performedBy String
+  role        String
+  notes       String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([batchId])
+  @@map("batch_events")
+}
+
+model QualityInspection {
+  id                  String   @id @default(uuid())
+  batchId             String   @unique
+  batch               WasteBatch @relation(fields: [batchId], references: [id])
+  inspectorName       String
+  contaminationLevel  String
+  moistureLevel       String
+  packagingCondition  String
+  foreignMaterials    Boolean
+  outcome             String
+  grade               String
+  notes               String?
+  inspectedAt         DateTime @default(now())
+
+  @@map("quality_inspections")
+}
+
+model StorageZone {
+  id            String   @id @default(uuid())
+  mrfId         String
+  name          String
+  wasteStream   String
+  capacityKg    Decimal  @db.Decimal(10, 2)
+  currentStockKg Decimal @db.Decimal(10, 2) @default(0)
+  location      String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  inventoryMoves InventoryMovement[]
+
+  @@map("storage_zones")
+}
+
+model InventoryMovement {
+  id            String   @id @default(uuid())
+  storageZoneId String
+  storageZone   StorageZone @relation(fields: [storageZoneId], references: [id])
+  batchId       String?
+  batch         WasteBatch? @relation(fields: [batchId], references: [id])
+  movementType  String   // IN | OUT | ADJUSTMENT
+  weightKg      Decimal  @db.Decimal(8, 3)
+  notes         String?
+  performedBy   String
+  createdAt     DateTime @default(now())
+
+  @@index([storageZoneId])
+  @@map("inventory_movements")
+}
+
+model Processor {
+  id                   String   @id @default(uuid())
+  name                 String
+  contactName          String
+  contactPhone         String
+  address              String
+  latitude             Decimal  @db.Decimal(9, 6)
+  longitude            Decimal  @db.Decimal(9, 6)
+  acceptedMaterials    String[]
+  minQuantityKg        Decimal  @db.Decimal(8, 2)
+  maxQuantityKg        Decimal  @db.Decimal(8, 2)
+  indicativePricePerKg Decimal? @db.Decimal(8, 2)
+  isDemo               Boolean  @default(true)
+  isVerified           Boolean  @default(false)
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+
+  dispatches     Dispatch[]
+  purchaseRequests PurchaseRequest[]
+
+  @@map("processors")
+}
+
+model RoutePlan {
+  id                   String   @id @default(uuid())
+  vehicleId            String
+  vehicle              Vehicle  @relation(fields: [vehicleId], references: [id])
+  status               String   @default("PLANNED")
+  plannedDate          DateTime
+  estimatedDistanceKm  Decimal  @db.Decimal(8, 2) @default(0)
+  estimatedDurationMin Int      @default(0)
+  optimized            Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  stops RouteStop[]
+
+  @@map("route_plans")
+}
+
+model RouteStop {
+  id                String   @id @default(uuid())
+  routePlanId       String
+  routePlan         RoutePlan @relation(fields: [routePlanId], references: [id])
+  collectionPointId String
+  collectionPoint   CollectionPoint @relation(fields: [collectionPointId], references: [id])
+  sequence          Int
+  estimatedArrival  DateTime?
+  actualArrival     DateTime?
+  status            String   @default("PENDING")
+  collectedWeightKg Decimal? @db.Decimal(8, 3)
+
+  @@map("route_stops")
+}
+
+model Dispatch {
+  id           String   @id @default(uuid())
+  dispatchCode String   @unique
+  status       String   @default("DRAFT")
+  processorId  String
+  processor    Processor @relation(fields: [processorId], references: [id])
+  vehicleId    String?
+  vehicle      Vehicle? @relation(fields: [vehicleId], references: [id])
+  totalWeightKg Decimal  @db.Decimal(10, 3)
+  scheduledDate DateTime
+  createdBy    String
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  batches          DispatchBatch[]
+  receipts         Receipt[]
+  processingEvidences ProcessingEvidence[]
+
+  @@map("dispatches")
+}
+
+model DispatchBatch {
+  id         String   @id @default(uuid())
+  dispatchId String
+  dispatch   Dispatch @relation(fields: [dispatchId], references: [id])
+  batchId    String
+  batch      WasteBatch @relation(fields: [batchId], references: [id])
+  weightKg   Decimal  @db.Decimal(8, 3)
+  createdAt  DateTime @default(now())
+
+  @@unique([dispatchId, batchId])
+  @@map("dispatch_batches")
+}
+
+model Receipt {
+  id               String   @id @default(uuid())
+  dispatchId       String
+  dispatch         Dispatch @relation(fields: [dispatchId], references: [id])
+  receivedBy       String
+  receivedWeightKg Decimal  @db.Decimal(10, 3)
+  discrepancyKg    Decimal  @db.Decimal(10, 3) @default(0)
+  notes            String?
+  evidenceUrl      String?
+  receivedAt       DateTime @default(now())
+
+  @@map("receipts")
+}
+
+model ProcessingEvidence {
+  id                String   @id @default(uuid())
+  dispatchId        String
+  dispatch          Dispatch @relation(fields: [dispatchId], references: [id])
+  processedWeightKg Decimal  @db.Decimal(10, 3)
+  processType       String
+  evidenceUrl       String?
+  verifiedBy        String?
+  notes             String?
+  processedAt       DateTime
+  createdAt         DateTime @default(now())
+
+  @@map("processing_evidences")
+}
+
+model CitizenReport {
+  id                String   @id @default(uuid())
+  villageId         String
+  village           Village  @relation(fields: [villageId], references: [id])
+  collectionPointId String?
+  collectionPoint   CollectionPoint? @relation(fields: [collectionPointId], references: [id])
+  reportType        String
+  description       String
+  photoUrl          String?
+  latitude          Decimal? @db.Decimal(9, 6)
+  longitude         Decimal? @db.Decimal(9, 6)
+  status            String   @default("PENDING")
+  reportedBy        String
+  createdAt         DateTime @default(now())
+  resolvedAt        DateTime?
+
+  @@map("citizen_reports")
+}
+
+model CollectionSchedule {
+  id          String   @id @default(uuid())
+  villageId   String
+  village     Village  @relation(fields: [villageId], references: [id])
+  wasteStream String
+  dayOfWeek   Int      // 0=Sun, 6=Sat
+  timeSlot    String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@map("collection_schedules")
+}
+
+model SyncOperation {
+  id                String   @id @default(uuid())
+  clientOperationId String   @unique
+  operationType     String
+  payload           Json
+  state             String   @default("PENDING")
+  retryCount        Int      @default(0)
+  lastError         String?
+  createdAt         DateTime @default(now())
+  syncedAt          DateTime?
+
+  @@index([state])
+  @@map("sync_operations")
+}
+
+model AnomalyFlag {
+  id          String   @id @default(uuid())
+  anomalyType String
+  entityId    String?
+  entityType  String?
+  description String
+  severity    String   @default("MEDIUM")
+  isResolved  Boolean  @default(false)
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@map("anomaly_flags")
+}
+
+model PurchaseRequest {
+  id          String   @id @default(uuid())
+  processorId String
+  processor   Processor @relation(fields: [processorId], references: [id])
+  status      String   @default("PENDING")
+  requestedWeightKg Decimal @db.Decimal(10, 2)
+  materialType String
+  minGrade    String
+  offeredPricePerKg Decimal? @db.Decimal(8, 2)
+  notes       String?
+  requestedBy String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("purchase_requests")
+}
+
+model SimulationRun {
+  id          String   @id @default(uuid())
+  name        String
+  scenario    String
+  parameters  Json
+  results     Json?
+  status      String   @default("PENDING")
+  createdBy   String
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+
+  @@map("simulation_runs")
+}
+
+model AuditEvent {
+  id          String   @id @default(uuid())
+  entityType  String
+  entityId    String
+  action      String
+  performedBy String
+  role        String
+  before      Json?
+  after       Json?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@map("audit_events")
+}
+
+model RewardTransaction {
+  id            String   @id @default(uuid())
+  citizenName   String
+  villageId     String
+  points        Int
+  reason        String
+  referenceId   String?
+  createdAt     DateTime @default(now())
+
+  @@map("reward_transactions")
+}
+
+model PoolingGroup {
+  id              String   @id @default(uuid())
+  name            String
+  status          String   @default("DRAFT")
+  targetProcessorId String?
+  totalWeightKg   Decimal  @db.Decimal(10, 2) @default(0)
+  estimatedSavingsINR Decimal? @db.Decimal(10, 2)
+  createdBy       String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("pooling_groups")
+}

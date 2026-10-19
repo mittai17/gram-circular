@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+dist/
+build/
+.next/
+.expo/
+*.log
+.DS_Store
+prisma/migrations/*.sql.bak
+__pycache__/
+*.pyc
+.venv/
+venv/
+.vercel/
+*.tsbuildinfo

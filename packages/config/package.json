@@ -1,0 +1,7 @@
+{
+  "name": "@gram-circular/config",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "files": ["tsconfig.json", "tsconfig.base.json", "eslint.config.js"]
+}

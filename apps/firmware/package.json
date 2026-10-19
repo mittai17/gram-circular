@@ -1,0 +1,21 @@
+{
+  "name": "firmware",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ESP32 firmware for HX711 smart scale and HC-SR04 ultrasonic bin fill sensor for GRAM-CIRCULAR",
+  "scripts": {
+    "build": "pio run",
+    "upload": "pio run --target upload",
+    "monitor": "pio device monitor -b 115200",
+    "clean": "pio run --target clean"
+  },
+  "keywords": [
+    "esp32",
+    "hx711",
+    "hc-sr04",
+    "iot",
+    "firmware",
+    "smart-scale",
+    "sih2026"
+  ]
+}

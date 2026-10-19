@@ -1,0 +1,30 @@
+{
+  "name": "gram-circular",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GRAM-CIRCULAR - Rural MLP Waste Management System (SIH 2026)",
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "dev:web": "pnpm --filter web run dev",
+    "dev:api": "pnpm --filter api run dev",
+    "dev:mobile": "pnpm --filter mobile run dev",
+    "dev:optimizer": "pnpm --filter optimizer run dev",
+    "build": "pnpm --filter web run build && pnpm --filter api run build",
+    "type-check": "pnpm -r run type-check",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+}
