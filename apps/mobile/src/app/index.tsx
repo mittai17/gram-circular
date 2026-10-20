@@ -8,6 +8,7 @@ import {
   StatusBar,
   SafeAreaView,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useRole } from '../context/RoleContext';
@@ -23,7 +24,6 @@ import {
   ChevronRight,
   Wifi,
   WifiOff,
-  Leaf,
   Layers,
   Sparkles,
 } from 'lucide-react-native';
@@ -146,7 +146,11 @@ export default function DemoRoleSelector() {
       <View style={styles.header}>
         <View style={styles.brandRow}>
           <View style={styles.logoBadge}>
-            <Leaf size={22} color="#ffffff" />
+            <Image
+              source={require('../../assets/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
           <View style={styles.brandMeta}>
             <Text style={styles.brandTitle}>GRAM-CIRCULAR</Text>
@@ -269,13 +273,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   logoBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 12,
+    padding: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  logoImage: {
+    width: 46,
+    height: 46,
   },
   brandMeta: {
     flex: 1,

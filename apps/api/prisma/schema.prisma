@@ -720,3 +720,4 @@ model OfflineSyncQueue {
   @@index([clientDeviceId])
   @@map("offline_sync_queue")
 }
+

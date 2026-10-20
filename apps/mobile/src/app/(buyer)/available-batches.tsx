@@ -129,6 +129,7 @@ const CATALOG: CatalogBatch[] = [
 ];
 
 const WASTE_TYPE_COLORS: Record<string, { bg: string; color: string }> = {
+  All: { bg: '#f1f5f9', color: '#64748b' },
   MLP: { bg: '#ecfdf5', color: '#15803d' },
   HDPE: { bg: '#eff6ff', color: '#2563eb' },
   LDPE: { bg: '#f0fdfa', color: '#0d9488' },
@@ -136,6 +137,7 @@ const WASTE_TYPE_COLORS: Record<string, { bg: string; color: string }> = {
 };
 
 const GRADE_COLORS: Record<string, { bg: string; color: string }> = {
+  All: { bg: '#f1f5f9', color: '#64748b' },
   A: { bg: '#ecfdf5', color: '#15803d' },
   B: { bg: '#fef3c7', color: '#b45309' },
   C: { bg: '#fef2f2', color: '#b91c1c' },
@@ -219,7 +221,7 @@ export default function BuyerAvailableBatchesScreen() {
         >
           {MATERIAL_TAGS.map((tag) => {
             const active = activeMaterial === tag;
-            const theme = WASTE_TYPE_COLORS[tag];
+            const theme = WASTE_TYPE_COLORS[tag] ?? { bg: '#f1f5f9', color: '#64748b' };
             return (
               <TouchableOpacity
                 key={tag}

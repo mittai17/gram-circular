@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useRoleStore, ROLE_LANDING_PAGES } from '@/stores/role-store';
 import { DemoRole } from '@/types';
 import {
-  Leaf,
   Shield,
   ArrowRight,
   Cpu,
@@ -210,13 +209,13 @@ export default function RootHomePage() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-2xl bg-white flex items-center justify-center shadow-md ring-2 ring-emerald-500/20 overflow-hidden p-0.5">
+            <div className="h-11 w-11 rounded-2xl bg-white flex items-center justify-center shadow-md ring-2 ring-emerald-500/20 overflow-hidden p-0.5 shrink-0">
               <Image
                 src="/ecoza-logo.png"
                 alt="ecoza logo"
-                width={40}
-                height={40}
-                className="object-contain"
+                width={44}
+                height={44}
+                className="w-full h-full object-contain"
                 priority
               />
             </div>
@@ -247,6 +246,22 @@ export default function RootHomePage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-b from-white via-emerald-50/30 to-[#f8faf9] border-b border-gray-200/80 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center space-y-4">
+          <div className="flex justify-center mb-2">
+            <div className="relative group">
+              <div className="absolute -inset-1.5 bg-gradient-to-r from-emerald-500 to-green-600 rounded-full blur-md opacity-20 group-hover:opacity-35 transition duration-300" />
+              <div className="relative bg-white p-3 rounded-full shadow-lg border border-emerald-100 flex items-center justify-center">
+                <Image
+                  src="/logo.png"
+                  width={112}
+                  height={112}
+                  alt="GRAM-CIRCULAR Official Emblem"
+                  className="w-24 h-24 sm:w-28 sm:h-28 object-contain hover:scale-105 transition-transform"
+                  priority
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/80 border border-emerald-200 text-[#0f3d24] text-xs font-bold tracking-wide uppercase shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
             Rural Circular Economy Platform
@@ -588,10 +603,14 @@ export default function RootHomePage() {
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 py-6 mt-12 text-xs text-gray-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-[#1a5c38] text-white flex items-center justify-center font-bold text-[10px]">
-              GC
-            </div>
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/logo.png"
+              width={24}
+              height={24}
+              alt="GRAM-CIRCULAR"
+              className="w-6 h-6 object-contain"
+            />
             <span>
               <strong>GRAM-CIRCULAR</strong> — Rural Multilayer Plastic (MLP) Waste Value Chain
             </span>

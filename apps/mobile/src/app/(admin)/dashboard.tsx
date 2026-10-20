@@ -16,6 +16,7 @@ import {
   Users,
   ChevronRight,
   Layers,
+  Navigation,
 } from 'lucide-react-native';
 
 export default function AdminDashboard() {
@@ -175,6 +176,22 @@ export default function AdminDashboard() {
 
         {/* Quick Links */}
         <SectionHeader title="Quick Actions" />
+        <View style={styles.row}>
+          <Button
+            title="Dynamic Routing"
+            variant="outline"
+            style={{ flex: 1 }}
+            onPress={() => router.push('/(admin)/dynamic-routing')}
+            leftIcon={<Navigation size={16} color={colors.primary} />}
+          />
+          <Button
+            title="O&M Ledger"
+            variant="outline"
+            style={{ flex: 1 }}
+            onPress={() => router.push('/(admin)/sustainability')}
+            leftIcon={<FileText size={16} color={colors.primary} />}
+          />
+        </View>
         <View style={styles.row}>
           <Button
             title="Compliance Reports"

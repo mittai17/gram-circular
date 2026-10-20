@@ -6,6 +6,7 @@ import { StatCard } from '@/components/ui/stat-card';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { CollectionPointMap, CollectionPointMapPoint } from '@/components/map/CollectionPointMap';
 import Link from 'next/link';
 import {
   Trash2,
@@ -32,6 +33,17 @@ import {
   Legend,
 } from 'recharts';
 import { MOCK_COLLECTION_POINTS, MOCK_BATCHES } from '@/lib/mock-data';
+
+// Live map overview — Tamil Nadu demo points
+const MAP_OVERVIEW_POINTS: CollectionPointMapPoint[] = [
+  { id: 'cp1', name: 'Shanti Nagar CP-01', lat: 9.1850, lng: 77.5980, fillPercent: 20, stream: 'Wet+Dry', isActive: true },
+  { id: 'cp2', name: 'Gandhi St CP-02',    lat: 9.1780, lng: 77.6120, fillPercent: 45, stream: 'MLP+Dry', isActive: true },
+  { id: 'cp3', name: 'Kovilpattu CP-03',   lat: 9.1650, lng: 77.6180, fillPercent: 72, stream: 'Wet+MLP', isActive: true },
+  { id: 'cp4', name: 'Murugan Nagar CP-04',lat: 9.1580, lng: 77.6050, fillPercent: 88, stream: 'Dry',     isActive: true },
+  { id: 'cp5', name: 'Anna Colony CP-05',  lat: 9.1620, lng: 77.5920, fillPercent: 60, stream: 'MLP',     isActive: true },
+  { id: 'cp6', name: 'Perumalpuram CP-06', lat: 9.1700, lng: 77.5850, fillPercent: 95, stream: 'All',     isActive: true },
+];
+
 
 const trendData = [
   { date: 'Oct 10', Wet: 140, Dry: 110, Sanitary: 60, MLP: 45 },

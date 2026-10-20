@@ -125,13 +125,13 @@ export function Sidebar() {
       {/* Brand Header */}
       <div className="p-4 sm:p-5 flex items-center justify-between border-b border-emerald-950/60 bg-[#0a2e1b]/40">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform overflow-hidden p-0.5">
+          <div className="h-11 w-11 rounded-xl bg-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform overflow-hidden p-1 shrink-0 ring-1 ring-white/20">
             <Image
               src="/ecoza-logo.png"
               alt="ecoza logo"
               width={44}
               height={44}
-              className="object-contain"
+              className="w-full h-full object-contain"
               priority
             />
           </div>
