@@ -25,6 +25,16 @@ import {
   TrendingDown,
   Zap,
 } from 'lucide-react-native';
+import OSMWebViewMap, { RouteStop as MapRouteStop } from '../../components/map/OSMWebViewMap';
+
+const DYNAMIC_DEPOT = { lat: 9.1726, lng: 77.6050 };
+
+const DYNAMIC_MAP_STOPS: MapRouteStop[] = [
+  { id: 's1', name: 'CP-01 Shanti Nagar', coordinate: { lat: 9.1850, lng: 77.5980 }, status: 'COMPLETED', sequence: 1, fillPercent: 42 },
+  { id: 's2', name: 'CP-03 Gandhi Street Ward 4', coordinate: { lat: 9.1650, lng: 77.6180 }, status: 'CURRENT', sequence: 2, fillPercent: 85 },
+  { id: 's3', name: 'CP-05 Temple Road Circle', coordinate: { lat: 9.1620, lng: 77.5920 }, status: 'PENDING', sequence: 3, fillPercent: 60 },
+  { id: 's4', name: 'CP-07 School Road Junction', coordinate: { lat: 9.1580, lng: 77.6050 }, status: 'PENDING', sequence: 4, fillPercent: 30 },
+];
 
 const PICKUP_REQUESTS = [
   {
@@ -232,8 +242,18 @@ export default function DynamicRoutingScreen() {
         </Text>
       </TouchableOpacity>
 
+      {/* OpenStreetMap + OSRM CVRP Route Map */}
+      <View style={{ marginBottom: 16 }}>
+        <OSMWebViewMap
+          stops={DYNAMIC_MAP_STOPS}
+          depot={DYNAMIC_DEPOT}
+          showRouting
+          height={260}
+        />
+      </View>
+
       {/* Scheduled Stop Sequence */}
-      <SectionHeader title="Scheduled Stop Sequence" subtitle="TN-20-CZ-8104 • Ramesh K • 6 stops" />
+      <SectionHeader title="Scheduled Stop Sequence" subtitle="TN-20-CZ-8104 • Ramesh K • 4 optimized stops" />
       <Card padding={0}>
         {ROUTE_STOPS.map((stop, i) => (
           <View

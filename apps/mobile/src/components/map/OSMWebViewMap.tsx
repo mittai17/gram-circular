@@ -1,8 +1,8 @@
 // apps/mobile/src/components/map/OSMWebViewMap.tsx
-// Pure React Native OpenStreetMap tile renderer with OSRM quantum routing.
+// High-performance OpenStreetMap raster tile renderer with real OSRM road geometry
 // 100% compatible with Expo Go and React Native 0.76 Bridgeless mode.
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,19 +10,18 @@ import {
   Image,
   TouchableOpacity,
   LayoutChangeEvent,
+  ActivityIndicator,
 } from 'react-native';
-import Svg, { Path, Circle, Rect, G, Text as SvgText, Line } from 'react-native-svg';
+import Svg, { Path, Circle, G, Text as SvgText } from 'react-native-svg';
+import { fetchOSRMRoute, formatDistance, formatDuration, LatLng, OSRMRoute } from '../../lib/osmRouting';
 
-export interface LatLng {
-  lat: number;
-  lng: number;
-}
+export { LatLng };
 
 export interface RouteStop {
   id: string;
   name: string;
   coordinate: LatLng;
-  status: 'PENDING' | 'COMPLETED' | 'SKIPPED' | 'CURRENT';
+  status: 'PENDING' | 'COMPLETED' | 'SKIPPED' | 'CURRENT' | string;
   fillPercent?: number;
   sequence: number;
 }
@@ -32,9 +31,10 @@ interface OSMWebViewMapProps {
   depot?: LatLng;
   showRouting?: boolean;
   height?: number;
+  onStopSelect?: (stop: RouteStop) => void;
 }
 
-const STATUS_COLORS: Record<RouteStop['status'], string> = {
+const STATUS_COLORS: Record<string, string> = {
   PENDING: '#f97316',
   COMPLETED: '#22c55e',
   SKIPPED: '#9ca3af',
@@ -56,10 +56,14 @@ export default function OSMWebViewMap({
   stops = [],
   depot = { lat: 9.1726, lng: 77.605 },
   showRouting = true,
-  height = 280,
+  height = 290,
+  onStopSelect,
 }: OSMWebViewMapProps) {
   const [dimensions, setDimensions] = useState({ width: 340, height });
   const [selectedStop, setSelectedStop] = useState<RouteStop | null>(null);
+  const [osrmRoute, setOsrmRoute] = useState<OSRMRoute | null>(null);
+  const [loadingRoute, setLoadingRoute] = useState(false);
+  const [zoomOffset, setZoomOffset] = useState(0);
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height: h } = e.nativeEvent.layout;
@@ -68,11 +72,52 @@ export default function OSMWebViewMap({
     }
   };
 
-  // Center coordinate and bounding box calculation
-  const { allPoints, bounds, centerTile } = useMemo(() => {
-    const pts: { lat: number; lng: number }[] = [];
+  // Build the list of ordered waypoints
+  const waypoints = useMemo(() => {
+    const pts: LatLng[] = [];
     if (depot) pts.push(depot);
     stops.forEach((s) => pts.push(s.coordinate));
+    if (depot && stops.length > 0) pts.push(depot);
+    return pts;
+  }, [depot, stops]);
+
+  // Fetch real-road OSRM driving geometry
+  useEffect(() => {
+    if (!showRouting || waypoints.length < 2) {
+      setOsrmRoute(null);
+      return;
+    }
+
+    let isMounted = true;
+    setLoadingRoute(true);
+
+    fetchOSRMRoute(waypoints)
+      .then((route) => {
+        if (!isMounted) return;
+        setOsrmRoute(route);
+        setLoadingRoute(false);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setOsrmRoute(null);
+        setLoadingRoute(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [waypoints, showRouting]);
+
+  // Compute bounding box encompassing depot, stops, AND real road geometry
+  const { bounds, centerTile } = useMemo(() => {
+    const pts: LatLng[] = [];
+    if (depot) pts.push(depot);
+    stops.forEach((s) => pts.push(s.coordinate));
+
+    // If OSRM returned geometry, include road points so polyline never clips
+    if (osrmRoute?.geometry && osrmRoute.geometry.length > 0) {
+      osrmRoute.geometry.forEach((p) => pts.push(p));
+    }
 
     if (pts.length === 0) {
       pts.push({ lat: 9.1726, lng: 77.605 });
@@ -90,10 +135,9 @@ export default function OSMWebViewMap({
       if (p.lng > maxLng) maxLng = p.lng;
     });
 
-    // Add safe margin
     const latSpan = Math.max(maxLat - minLat, 0.02);
     const lngSpan = Math.max(maxLng - minLng, 0.02);
-    const margin = 0.25;
+    const margin = 0.22;
 
     const b = {
       minLat: minLat - latSpan * margin,
@@ -104,53 +148,81 @@ export default function OSMWebViewMap({
 
     const centerLat = (minLat + maxLat) / 2;
     const centerLng = (minLng + maxLng) / 2;
-    const zoom = 13;
+    const baseZoom = 13 + zoomOffset;
+    const zoom = Math.max(10, Math.min(16, baseZoom));
     const tile = latLngToTile(centerLat, centerLng, zoom);
 
-    return { allPoints: pts, bounds: b, centerTile: { ...tile, zoom } };
-  }, [stops, depot]);
+    return { bounds: b, centerTile: { ...tile, zoom } };
+  }, [stops, depot, osrmRoute, zoomOffset]);
 
-  // Project lat/lng into SVG pixel coordinates
+  // Project latitude/longitude into SVG pixel space
   const project = (lat: number, lng: number) => {
-    const padding = 28;
+    const padding = 26;
     const w = dimensions.width - padding * 2;
     const h = dimensions.height - padding * 2;
 
-    const x =
-      padding + ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * w;
-    const y =
-      padding + ((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat)) * h;
+    const lngRatio = (lng - bounds.minLng) / (bounds.maxLng - bounds.minLng);
+    const latRatio = (bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat);
 
-    return { x: Math.max(16, Math.min(dimensions.width - 16, x)), y: Math.max(16, Math.min(dimensions.height - 16, y)) };
+    const x = padding + lngRatio * w;
+    const y = padding + latRatio * h;
+
+    return {
+      x: Math.max(12, Math.min(dimensions.width - 12, x)),
+      y: Math.max(12, Math.min(dimensions.height - 12, y)),
+    };
   };
 
-  // Generate OSRM quantum path string connecting depot -> stops -> depot
+  // Convert real road polyline (or fallback direct points) to SVG path
   const pathD = useMemo(() => {
-    if (!showRouting || stops.length === 0) return '';
-    const pointsToConnect = depot
-      ? [depot, ...stops.map((s) => s.coordinate), depot]
-      : stops.map((s) => s.coordinate);
+    if (!showRouting) return '';
 
-    return pointsToConnect.reduce((acc, pt, index) => {
+    const points = osrmRoute?.geometry && osrmRoute.geometry.length > 1
+      ? osrmRoute.geometry
+      : waypoints;
+
+    if (points.length < 2) return '';
+
+    return points.reduce((acc, pt, index) => {
       const { x, y } = project(pt.lat, pt.lng);
-      return index === 0 ? `M ${x} ${y}` : `${acc} L ${x} ${y}`;
+      return index === 0 ? `M ${x.toFixed(1)} ${y.toFixed(1)}` : `${acc} L ${x.toFixed(1)} ${y.toFixed(1)}`;
     }, '');
-  }, [stops, depot, bounds, dimensions, showRouting]);
+  }, [showRouting, osrmRoute, waypoints, bounds, dimensions]);
 
   const depotPos = depot ? project(depot.lat, depot.lng) : null;
 
+  const routeSummaryText = useMemo(() => {
+    if (osrmRoute) {
+      return `🛣 ${formatDistance(osrmRoute.distance)} • ⏱ ${formatDuration(osrmRoute.duration)} • ${stops.length} Stops`;
+    }
+    return `🛣 ~18.4 km • ⏱ ~38 min • ${stops.length} Stops`;
+  }, [osrmRoute, stops.length]);
+
+  const handleMarkerPress = (stop: RouteStop) => {
+    setSelectedStop(stop);
+    onStopSelect?.(stop);
+  };
+
   return (
     <View style={[styles.container, { height }]} onLayout={onLayout}>
-      {/* OpenStreetMap Tile Background (3x3 grid centered on Tamil Nadu cluster) */}
+      {/* OpenStreetMap Raster Tile Grid (CartoDB Voyager / OSM with CDN fallback) */}
       <View style={styles.tileGrid}>
         {[-1, 0, 1].map((dy) => (
           <View key={`row-${dy}`} style={styles.tileRow}>
             {[-1, 0, 1].map((dx) => {
-              const tileUrl = `https://tile.openstreetmap.org/${centerTile.zoom}/${centerTile.x + dx}/${centerTile.y + dy}.png`;
+              const subdomains = ['a', 'b', 'c'];
+              const sub = subdomains[Math.abs(dx + dy) % 3];
+              const tileUrl = `https://${sub}.basemaps.cartocdn.com/rastertiles/voyager/${centerTile.zoom}/${centerTile.x + dx}/${centerTile.y + dy}.png`;
+
               return (
                 <Image
                   key={`tile-${dx}-${dy}`}
-                  source={{ uri: tileUrl }}
+                  source={{
+                    uri: tileUrl,
+                    headers: {
+                      'User-Agent': 'GramCircular-Mobile/1.0',
+                    },
+                  }}
                   style={styles.tileImage}
                   resizeMode="cover"
                 />
@@ -160,14 +232,14 @@ export default function OSMWebViewMap({
         ))}
       </View>
 
-      {/* SVG Interactive Route & Marker Layer */}
+      {/* SVG Interactive Real-Road Route & Marker Layer */}
       <Svg style={StyleSheet.absoluteFill}>
-        {/* Glow behind quantum route polyline */}
+        {/* Real road path glow casing */}
         {showRouting && pathD ? (
           <>
             <Path
               d={pathD}
-              stroke="rgba(26, 92, 56, 0.25)"
+              stroke="rgba(26, 92, 56, 0.35)"
               strokeWidth={8}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -176,23 +248,22 @@ export default function OSMWebViewMap({
             <Path
               d={pathD}
               stroke="#1a5c38"
-              strokeWidth={3.5}
+              strokeWidth={3.8}
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeDasharray="6 3"
               fill="none"
             />
           </>
         ) : null}
 
-        {/* Depot Marker */}
+        {/* Depot (MRF Facility) Marker */}
         {depotPos && (
-          <G>
+          <G onPress={() => setSelectedStop(null)}>
             <Circle cx={depotPos.x} cy={depotPos.y} r={14} fill="#0f3d24" stroke="#ffffff" strokeWidth={2.5} />
             <SvgText
               x={depotPos.x}
               y={depotPos.y + 4}
-              fontSize={9}
+              fontSize={8.5}
               fontWeight="bold"
               fill="#ffffff"
               textAnchor="middle"
@@ -202,27 +273,25 @@ export default function OSMWebViewMap({
           </G>
         )}
 
-        {/* Stop Markers */}
+        {/* Sequenced Route Stop Markers */}
         {stops.map((stop) => {
           const pos = project(stop.coordinate.lat, stop.coordinate.lng);
           const color = STATUS_COLORS[stop.status] || '#f97316';
           const isSelected = selectedStop?.id === stop.id;
 
           return (
-            <G key={stop.id} onPress={() => setSelectedStop(stop)}>
-              {/* Pulse effect if selected or current */}
+            <G key={stop.id} onPress={() => handleMarkerPress(stop)}>
+              {/* Outer ring for selected or current stop */}
               {(isSelected || stop.status === 'CURRENT') && (
-                <Circle cx={pos.x} cy={pos.y} r={18} fill={color} opacity={0.25} />
+                <Circle cx={pos.x} cy={pos.y} r={17} fill={color} opacity={0.3} />
               )}
-              {/* Outer white ring */}
-              <Circle cx={pos.x} cy={pos.y} r={12} fill="#ffffff" stroke={color} strokeWidth={3} />
-              {/* Inner colored circle */}
-              <Circle cx={pos.x} cy={pos.y} r={8.5} fill={color} />
-              {/* Sequence number */}
+              {/* Main marker bubble */}
+              <Circle cx={pos.x} cy={pos.y} r={11.5} fill="#ffffff" stroke={color} strokeWidth={2.8} />
+              <Circle cx={pos.x} cy={pos.y} r={8} fill={color} />
               <SvgText
                 x={pos.x}
                 y={pos.y + 3.5}
-                fontSize={9}
+                fontSize={8.5}
                 fontWeight="bold"
                 fill="#ffffff"
                 textAnchor="middle"
@@ -234,41 +303,62 @@ export default function OSMWebViewMap({
         })}
       </Svg>
 
-      {/* Top Header Overlay: OSM & Quantum Engine Badge */}
-      <View style={styles.topBadgeRow}>
+      {/* Top Header Overlay: Live Routing & OpenStreetMap Attribution */}
+      <View style={styles.topBadgeRow} pointerEvents="box-none">
         <View style={styles.quantumBadge}>
           <Text style={styles.quantumDot}>●</Text>
-          <Text style={styles.quantumBadgeText}>OSRM Quantum Route</Text>
+          <Text style={styles.quantumBadgeText}>
+            {loadingRoute ? 'Routing (OSRM)...' : 'OSRM Real-Road Route'}
+          </Text>
+          {loadingRoute && <ActivityIndicator size="small" color="#86efac" style={{ marginLeft: 4 }} />}
         </View>
         <View style={styles.osmAttribution}>
           <Text style={styles.osmAttributionText}>© OpenStreetMap</Text>
         </View>
       </View>
 
-      {/* Bottom Metric Pill */}
-      <View style={styles.routeInfo}>
-        <Text style={styles.routeInfoText}>🛣 18.4 km • ⏱ 38 min • 6 Stops</Text>
+      {/* Zoom Control Overlay */}
+      <View style={styles.zoomControls}>
+        <TouchableOpacity
+          style={styles.zoomBtn}
+          onPress={() => setZoomOffset((z) => Math.min(z + 1, 2))}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.zoomBtnText}>+</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.zoomBtn}
+          onPress={() => setZoomOffset((z) => Math.max(z - 1, -2))}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.zoomBtnText}>−</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Stop Detail Card Popover */}
+      {/* Bottom Live Route Metric Pill */}
+      <View style={styles.routeInfo}>
+        <Text style={styles.routeInfoText}>{routeSummaryText}</Text>
+      </View>
+
+      {/* Stop Popover Card */}
       {selectedStop && (
         <View style={styles.popoverCard}>
           <View style={styles.popoverHeader}>
             <View
               style={[
                 styles.popoverSeq,
-                { backgroundColor: STATUS_COLORS[selectedStop.status] },
+                { backgroundColor: STATUS_COLORS[selectedStop.status] || '#1a5c38' },
               ]}
             >
               <Text style={styles.popoverSeqText}>{selectedStop.sequence}</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.popoverTitle}>{selectedStop.name}</Text>
+              <Text style={styles.popoverTitle} numberOfLines={1}>{selectedStop.name}</Text>
               <Text style={styles.popoverSub}>
-                Status: {selectedStop.status} • Fill: {selectedStop.fillPercent || 0}%
+                Status: {selectedStop.status} • Fill: {selectedStop.fillPercent ?? 0}%
               </Text>
             </View>
-            <TouchableOpacity onPress={() => setSelectedStop(null)}>
+            <TouchableOpacity onPress={() => setSelectedStop(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Text style={styles.popoverClose}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -290,6 +380,7 @@ const styles = StyleSheet.create({
   tileGrid: {
     ...StyleSheet.absoluteFillObject,
     flexDirection: 'column',
+    backgroundColor: '#f1f5f9',
   },
   tileRow: {
     flex: 1,
@@ -298,7 +389,7 @@ const styles = StyleSheet.create({
   tileImage: {
     flex: 1,
     height: '100%',
-    opacity: 0.85,
+    opacity: 0.92,
   },
   topBadgeRow: {
     position: 'absolute',
@@ -314,10 +405,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(26, 92, 56, 0.92)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: 'rgba(26, 92, 56, 0.94)',
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
     borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
   },
   quantumDot: {
     color: '#86efac',
@@ -325,34 +421,66 @@ const styles = StyleSheet.create({
   },
   quantumBadgeText: {
     color: '#ffffff',
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '700',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   osmAttribution: {
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 6,
+    borderWidth: 0.5,
+    borderColor: '#e2e8f0',
   },
   osmAttributionText: {
     fontSize: 9,
     color: '#475569',
     fontWeight: '600',
   },
+  zoomControls: {
+    position: 'absolute',
+    right: 8,
+    top: 44,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    overflow: 'hidden',
+    zIndex: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  zoomBtn: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#e2e8f0',
+  },
+  zoomBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#334155',
+    lineHeight: 18,
+  },
   routeInfo: {
     position: 'absolute',
     bottom: 8,
     left: 8,
-    backgroundColor: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#cbd5e1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 3,
     elevation: 2,
     zIndex: 10,
@@ -369,15 +497,15 @@ const styles = StyleSheet.create({
     right: 8,
     backgroundColor: '#ffffff',
     borderRadius: 10,
-    padding: 8,
+    padding: 9,
     borderWidth: 1,
     borderColor: '#cbd5e1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 3,
-    zIndex: 20,
+    elevation: 4,
+    zIndex: 25,
   },
   popoverHeader: {
     flexDirection: 'row',
@@ -397,12 +525,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   popoverTitle: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '700',
     color: '#0f172a',
   },
   popoverSub: {
-    fontSize: 10,
+    fontSize: 10.5,
     color: '#64748b',
     marginTop: 1,
   },

@@ -38,18 +38,22 @@ export interface OSRMStep {
 
 const OSRM_BASE = 'https://router.project-osrm.org/route/v1/driving';
 
-/**
- * Fetch an OSRM driving route through the given waypoints.
- * Returns null on network failure or when OSRM cannot find a route.
- */
-export async function fetchOSRMRoute(waypoints: LatLng[]): Promise<OSRMRoute | null> {
+export async function fetchOSRMRoute(
+  waypoints: LatLng[],
+  includeSteps = false
+): Promise<OSRMRoute | null> {
   if (waypoints.length < 2) return null;
 
   const coords = waypoints.map((p) => `${p.lng},${p.lat}`).join(';');
-  const url = `${OSRM_BASE}/${coords}?overview=full&geometries=geojson&steps=true`;
+  const url = `${OSRM_BASE}/${coords}?overview=full&geometries=geojson&steps=${includeSteps}`;
 
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) return null;
     const data = await res.json();
 
     if (data.code !== 'Ok' || !data.routes?.[0]) return null;
@@ -63,7 +67,7 @@ export async function fetchOSRMRoute(waypoints: LatLng[]): Promise<OSRMRoute | n
       distance: route.distance,
       duration: route.duration,
       geometry,
-      legs: route.legs as OSRMLeg[],
+      legs: (route.legs || []) as OSRMLeg[],
     };
   } catch {
     return null;

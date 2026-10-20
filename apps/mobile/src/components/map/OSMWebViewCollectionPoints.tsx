@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   LayoutChangeEvent,
 } from 'react-native';
-import Svg, { Circle, G, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, G } from 'react-native-svg';
 
 export interface CollectionPoint {
   id: string;
@@ -53,6 +53,7 @@ export default function OSMWebViewCollectionPoints({
 }: OSMWebViewCollectionPointsProps) {
   const [dimensions, setDimensions] = useState({ width: 340, height });
   const [selectedPoint, setSelectedPoint] = useState<CollectionPoint | null>(null);
+  const [zoomOffset, setZoomOffset] = useState(0);
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height: h } = e.nativeEvent.layout;
@@ -62,7 +63,9 @@ export default function OSMWebViewCollectionPoints({
   };
 
   const { bounds, centerTile } = useMemo(() => {
-    const pts = points.length > 0 ? points : [{ lat: 9.1726, lng: 77.605, fillPercent: 50, id: 'def', name: 'Center', wasteStreams: [], isActive: true }];
+    const pts = points.length > 0
+      ? points
+      : [{ lat: 9.1726, lng: 77.605, fillPercent: 50, id: 'def', name: 'Center', wasteStreams: [], isActive: true }];
 
     let minLat = Infinity,
       maxLat = -Infinity,
@@ -78,7 +81,7 @@ export default function OSMWebViewCollectionPoints({
 
     const latSpan = Math.max(maxLat - minLat, 0.015);
     const lngSpan = Math.max(maxLng - minLng, 0.015);
-    const margin = 0.3;
+    const margin = 0.25;
 
     const b = {
       minLat: minLat - latSpan * margin,
@@ -89,11 +92,12 @@ export default function OSMWebViewCollectionPoints({
 
     const centerLat = (minLat + maxLat) / 2;
     const centerLng = (minLng + maxLng) / 2;
-    const zoom = 13;
+    const baseZoom = 13 + zoomOffset;
+    const zoom = Math.max(10, Math.min(16, baseZoom));
     const tile = latLngToTile(centerLat, centerLng, zoom);
 
     return { bounds: b, centerTile: { ...tile, zoom } };
-  }, [points]);
+  }, [points, zoomOffset]);
 
   const project = (lat: number, lng: number) => {
     const padding = 24;
@@ -118,16 +122,24 @@ export default function OSMWebViewCollectionPoints({
 
   return (
     <View style={[styles.container, { height }]} onLayout={onLayout}>
-      {/* OpenStreetMap Tile Background (3x3 grid) */}
+      {/* OpenStreetMap Raster Tile Grid */}
       <View style={styles.tileGrid}>
         {[-1, 0, 1].map((dy) => (
           <View key={`row-${dy}`} style={styles.tileRow}>
             {[-1, 0, 1].map((dx) => {
-              const tileUrl = `https://tile.openstreetmap.org/${centerTile.zoom}/${centerTile.x + dx}/${centerTile.y + dy}.png`;
+              const subdomains = ['a', 'b', 'c'];
+              const sub = subdomains[Math.abs(dx + dy) % 3];
+              const tileUrl = `https://${sub}.basemaps.cartocdn.com/rastertiles/voyager/${centerTile.zoom}/${centerTile.x + dx}/${centerTile.y + dy}.png`;
+
               return (
                 <Image
                   key={`tile-${dx}-${dy}`}
-                  source={{ uri: tileUrl }}
+                  source={{
+                    uri: tileUrl,
+                    headers: {
+                      'User-Agent': 'GramCircular-Mobile/1.0',
+                    },
+                  }}
                   style={styles.tileImage}
                   resizeMode="cover"
                 />
@@ -157,7 +169,7 @@ export default function OSMWebViewCollectionPoints({
       </Svg>
 
       {/* Top Header Overlay */}
-      <View style={styles.topBadgeRow}>
+      <View style={styles.topBadgeRow} pointerEvents="box-none">
         <View style={styles.liveBadge}>
           <Text style={styles.liveDot}>●</Text>
           <Text style={styles.liveBadgeText}>OpenStreetMap • Live Bin Telemetry</Text>
@@ -165,6 +177,24 @@ export default function OSMWebViewCollectionPoints({
         <View style={styles.osmAttribution}>
           <Text style={styles.osmAttributionText}>© OpenStreetMap</Text>
         </View>
+      </View>
+
+      {/* Zoom Control Overlay */}
+      <View style={styles.zoomControls}>
+        <TouchableOpacity
+          style={styles.zoomBtn}
+          onPress={() => setZoomOffset((z) => Math.min(z + 1, 2))}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.zoomBtnText}>+</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.zoomBtn}
+          onPress={() => setZoomOffset((z) => Math.max(z - 1, -2))}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.zoomBtnText}>−</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Fill Level Legend */}
@@ -183,7 +213,7 @@ export default function OSMWebViewCollectionPoints({
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: '#ef4444' }]} />
-          <Text style={styles.legendText}>&gt;90% Urgent</Text>
+          <Text style={styles.legendText}>&gt;90%</Text>
         </View>
       </View>
 
@@ -203,7 +233,7 @@ export default function OSMWebViewCollectionPoints({
                 Fill: {selectedPoint.fillPercent}% • {selectedPoint.wasteStreams.join(', ')}
               </Text>
             </View>
-            <TouchableOpacity onPress={() => setSelectedPoint(null)}>
+            <TouchableOpacity onPress={() => setSelectedPoint(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Text style={styles.popoverClose}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -225,6 +255,7 @@ const styles = StyleSheet.create({
   tileGrid: {
     ...StyleSheet.absoluteFillObject,
     flexDirection: 'column',
+    backgroundColor: '#f1f5f9',
   },
   tileRow: {
     flex: 1,
@@ -233,7 +264,7 @@ const styles = StyleSheet.create({
   tileImage: {
     flex: 1,
     height: '100%',
-    opacity: 0.85,
+    opacity: 0.9,
   },
   topBadgeRow: {
     position: 'absolute',
@@ -249,10 +280,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(15, 61, 36, 0.9)',
+    backgroundColor: 'rgba(15, 61, 36, 0.92)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
   },
   liveDot: {
     color: '#4ade80',
@@ -264,15 +300,47 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   osmAttribution: {
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 6,
+    borderWidth: 0.5,
+    borderColor: '#e2e8f0',
   },
   osmAttributionText: {
     fontSize: 9,
     color: '#475569',
     fontWeight: '600',
+  },
+  zoomControls: {
+    position: 'absolute',
+    right: 8,
+    top: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    overflow: 'hidden',
+    zIndex: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  zoomBtn: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#e2e8f0',
+  },
+  zoomBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#334155',
+    lineHeight: 18,
   },
   legendRow: {
     position: 'absolute',
@@ -285,7 +353,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#cbd5e1',
     zIndex: 10,
   },
   legendItem: {
