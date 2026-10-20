@@ -1,6 +1,6 @@
 # GRAM-CIRCULAR Route & Waste Pooling Optimizer
 
-High-performance logistics and waste consolidation microservice for **GRAM-CIRCULAR (SIH 2026)**, powered by **FastAPI** and **Google OR-Tools**.
+High-performance logistics and waste consolidation microservice for **GRAM-CIRCULAR**, powered by **FastAPI** and **Google OR-Tools**.
 
 ---
 

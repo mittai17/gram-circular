@@ -22,7 +22,7 @@ export function DemoRoleBanner() {
       <div className="bg-[#0f3d24] text-white px-4 py-2 text-xs flex items-center justify-between border-b border-emerald-900/40">
         <div className="flex items-center gap-2">
           <Shield className="w-3.5 h-3.5 text-emerald-300" />
-          <span className="font-semibold">SIH 2026 EVALUATION DEMO</span>
+          <span className="font-semibold">STAKEHOLDER ROLE SELECTOR</span>
         </div>
       </div>
     );
@@ -55,7 +55,7 @@ export function DemoRoleBanner() {
         <span className="text-emerald-700 hidden sm:inline">|</span>
         <div className="flex items-center gap-1.5 font-bold tracking-wide text-emerald-100">
           <Shield className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="text-[11px] tracking-wider uppercase">SIH 2026 Evaluation</span>
+          <span className="text-[11px] tracking-wider uppercase">Stakeholder Roles</span>
         </div>
         <span className="text-emerald-300/60 hidden md:inline">•</span>
         <span className="text-emerald-200/90 hidden md:inline text-[11px]">

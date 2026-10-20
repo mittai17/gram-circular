@@ -2,7 +2,7 @@
   "name": "gram-circular",
   "version": "1.0.0",
   "private": true,
-  "description": "GRAM-CIRCULAR - Rural MLP Waste Management System (SIH 2026)",
+  "description": "GRAM-CIRCULAR - Rural MLP Waste Management System",
   "scripts": {
     "dev": "pnpm --parallel -r run dev",
     "dev:web": "pnpm --filter web run dev",
@@ -10,6 +10,11 @@
     "dev:mobile": "pnpm --filter mobile run dev",
     "dev:optimizer": "pnpm --filter optimizer run dev",
     "build": "pnpm --filter web run build && pnpm --filter api run build",
+    "build:web": "pnpm --filter web run build",
+    "build:api": "pnpm --filter api run build",
+    "start": "pnpm --parallel --filter web --filter api run start",
+    "start:web": "pnpm --filter web run start",
+    "start:api": "pnpm --filter api run start",
     "type-check": "pnpm -r run type-check",
     "lint": "pnpm -r run lint",
     "test": "pnpm -r run test"

@@ -1,6 +1,5 @@
 """
 GRAM-CIRCULAR Route and Multi-Village Pooling Optimization Engine
-Built for Smart India Hackathon (SIH 2026)
 
 Core capabilities:
 1. Capacitated Vehicle Routing Problem (CVRP) solver via Google OR-Tools

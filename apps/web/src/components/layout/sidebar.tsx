@@ -33,6 +33,8 @@ import {
   ArrowLeft,
   Building2,
   Scan,
+  Hammer,
+  ShoppingBag,
 } from 'lucide-react';
 
 interface NavItem {
@@ -66,6 +68,8 @@ export function Sidebar() {
   const navConfig: Record<string, NavItem[]> = {
     admin: [
       { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+      { label: 'Dynamic Routing', href: '/admin/dynamic-routing', icon: Route },
+      { label: 'O&M Ledger', href: '/admin/sustainability', icon: Scale },
       { label: 'Villages', href: '/admin/villages', icon: Home },
       { label: 'Collection Points', href: '/admin/collection-points', icon: MapPin },
       { label: 'Live Bins', href: '/admin/bins', icon: Trash2 },
@@ -79,14 +83,16 @@ export function Sidebar() {
     ],
     worker: [
       { label: 'Dashboard', href: '/worker/dashboard', icon: LayoutDashboard },
+      { label: 'Edge Sync', href: '/worker/sync', icon: RefreshCw, badge: '2G' },
       { label: 'My Route', href: '/worker/routes', icon: Route },
       { label: 'Weighing Station', href: '/worker/weighing', icon: Scale },
       { label: 'QR Batch Passport', href: '/worker/batches', icon: QrCode },
       { label: 'My Collections', href: '/worker/collections', icon: Layers },
-      { label: 'Offline Sync Queue', href: '/worker/sync', icon: RefreshCw },
     ],
     mrf: [
       { label: 'Dashboard', href: '/mrf/dashboard', icon: LayoutDashboard },
+      { label: 'MLP Upcycling', href: '/mrf/manufacturing', icon: Hammer },
+      { label: 'O&M Ledger', href: '/admin/sustainability', icon: Scale },
       { label: 'Incoming Batches', href: '/mrf/batches', icon: Layers, badge: '12' },
       { label: 'Quality Inspection', href: '/mrf/inspection', icon: ShieldCheck, badge: '8' },
       { label: 'Storage & Inventory', href: '/mrf/storage', icon: Package },
@@ -96,6 +102,7 @@ export function Sidebar() {
     ],
     buyer: [
       { label: 'Dashboard', href: '/buyer/dashboard', icon: LayoutDashboard },
+      { label: 'PWD Marketplace', href: '/buyer/marketplace', icon: ShoppingBag },
       { label: 'Available Batches', href: '/buyer/batches', icon: Package, badge: '12' },
       { label: 'Pickup Requests', href: '/buyer/requests', icon: Truck },
       { label: 'Handover Receipts', href: '/buyer/receipts', icon: FileCheck },

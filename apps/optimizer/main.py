@@ -1,7 +1,6 @@
 """
 GRAM-CIRCULAR Optimization Microservice
 FastAPI server exposing OR-Tools Route Optimizer & Multi-Village Pooling Evaluator
-Smart India Hackathon (SIH 2026)
 """
 
 import os

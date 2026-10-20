@@ -18,7 +18,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('GRAM-CIRCULAR API')
-    .setDescription('Rural MLP Waste Management System - SIH 2026')
+    .setDescription('Rural MLP Waste Management System')
     .setVersion('1.0')
     .addTag('villages')
     .addTag('batches')

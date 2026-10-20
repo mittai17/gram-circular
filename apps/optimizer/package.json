@@ -14,7 +14,6 @@
     "or-tools",
     "waste-management",
     "logistics",
-    "fastapi",
-    "sih2026"
+    "fastapi"
   ]
 }

@@ -1,7 +1,6 @@
 # GRAM-CIRCULAR
 
 > Rural MLP Waste Management & Circular Economy Platform
-> Smart India Hackathon 2026 | Problem ID: 26259
 
 ## Quick Start
 

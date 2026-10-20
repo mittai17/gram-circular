@@ -275,7 +275,7 @@ export default function AdminProcessorsPage() {
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
               <span>
-                <strong>Demo Mode:</strong> Processor records are sample data for SIH evaluation.
+                <strong>Demo Mode:</strong> Processor records are sample data for system evaluation.
                 Real authorization requires CPCB/PWMU verification before dispatch.
               </span>
             </div>

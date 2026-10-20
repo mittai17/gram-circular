@@ -13,6 +13,12 @@ import { RoutesModule } from './modules/routes/routes.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { DispatchModule } from './modules/dispatch/dispatch.module';
 import { InspectionModule } from './modules/inspection/inspection.module';
+// Extended MLP Value Chain Modules
+import { ManufacturingModule } from './modules/manufacturing/manufacturing.module';
+import { DynamicRoutingModule } from './modules/dynamic-routing/dynamic-routing.module';
+import { SustainabilityModule } from './modules/sustainability/sustainability.module';
+import { MarketplaceModule } from './modules/marketplace/marketplace.module';
+import { EdgeSyncModule } from './modules/edge-sync/edge-sync.module';
 
 @Module({
   imports: [
@@ -30,6 +36,12 @@ import { InspectionModule } from './modules/inspection/inspection.module';
     StorageModule,
     DispatchModule,
     InspectionModule,
+    // Core Modules
+    ManufacturingModule,
+    DynamicRoutingModule,
+    SustainabilityModule,
+    MarketplaceModule,
+    EdgeSyncModule,
   ],
 })
 export class AppModule {}

@@ -5,142 +5,242 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Wifi, WifiOff, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { StatCard } from '@/components/ui/stat-card';
+import {
+  MOCK_EDGE_DEVICES,
+  MOCK_OFFLINE_QUEUE,
+  MockEdgeDevice,
+  MockOfflineQueueItem,
+} from '@/lib/mock-data';
+import {
+  Wifi,
+  WifiOff,
+  Signal,
+  ArrowUpDown,
+  Smartphone,
+  HardDrive,
+  Database,
+  CheckCircle2,
+  RefreshCw,
+  Cpu,
+  ShieldCheck,
+  Zap,
+} from 'lucide-react';
 
-interface QueuedItem {
-  id: string;
-  operation: 'WEIGH_IN' | 'BATCH_CREATE' | 'TAG_SCAN';
-  payloadSummary: string;
-  timestamp: string;
-  retryCount: number;
-  status: 'PENDING' | 'SYNCED' | 'FAILED';
-}
+export default function EdgeSyncPage() {
+  const [devices] = React.useState<MockEdgeDevice[]>(MOCK_EDGE_DEVICES);
+  const [queue, setQueue] = React.useState<MockOfflineQueueItem[]>(MOCK_OFFLINE_QUEUE);
+  const [syncing, setSyncing] = React.useState(false);
+  const [syncComplete, setSyncComplete] = React.useState(false);
 
-export default function OfflineSyncPage() {
-  const [isOnline, setIsOnline] = React.useState(true);
-  const [isSyncing, setIsSyncing] = React.useState(false);
-  const [queue, setQueue] = React.useState<QueuedItem[]>([
-    {
-      id: 'q-101',
-      operation: 'WEIGH_IN',
-      payloadSummary: 'Batch MLP-2026-0142: 18.6 kg at CP-03',
-      timestamp: '16 Oct 2026, 09:15 AM',
-      retryCount: 1,
-      status: 'PENDING',
-    },
-    {
-      id: 'q-102',
-      operation: 'TAG_SCAN',
-      payloadSummary: 'Bin Sensor Ping CP-07 Battery 82%',
-      timestamp: '16 Oct 2026, 08:50 AM',
-      retryCount: 0,
-      status: 'SYNCED',
-    },
-    {
-      id: 'q-103',
-      operation: 'BATCH_CREATE',
-      payloadSummary: 'Batch MLP-2026-0141: 10.5 kg at CP-01',
-      timestamp: '16 Oct 2026, 08:45 AM',
-      retryCount: 0,
-      status: 'SYNCED',
-    },
-  ]);
+  const pendingCount = queue.filter(q => q.status === 'QUEUED').length;
+  const syncedCount = queue.filter(q => q.status === 'SYNCED').length;
+  const totalPendingBytes = queue
+    .filter(q => q.status === 'QUEUED')
+    .reduce((s, q) => s + q.payloadBytes, 0);
 
-  const handleSyncAll = () => {
-    setIsSyncing(true);
+  const handleFlushQueue = () => {
+    setSyncing(true);
+    setSyncComplete(false);
+
     setTimeout(() => {
-      setQueue((prev) =>
-        prev.map((item) => ({ ...item, status: 'SYNCED' as const }))
-      );
-      setIsSyncing(false);
-    }, 800);
+      setQueue(prev => prev.map(item => ({ ...item, status: 'SYNCED' })));
+      setSyncing(false);
+      setSyncComplete(true);
+    }, 1200);
   };
 
   return (
     <AppLayout
       headerProps={{
-        title: 'Offline Sync Queue Manager',
-        subtitle: 'IndexedDB-backed offline store with automatic reconciliation upon cellular reconnection',
+        title: 'Low-Bandwidth Edge Sync Architecture',
+        subtitle: 'Offline-First Field Data Aggregation for Remote 2G / Zero-Connectivity Rural Gram Panchayats',
       }}
     >
       <div className="space-y-6">
-        {/* Connectivity Status Banner */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
-                isOnline ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
-              }`}
-            >
-              {isOnline ? <Wifi className="w-5 h-5" /> : <WifiOff className="w-5 h-5" />}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-bold text-gray-900">
-                  {isOnline ? 'Cellular Connection Active (4G/LTE)' : 'Offline Mode (Local Storage)'}
-                </h4>
-                <Badge variant={isOnline ? 'success' : 'destructive'}>
-                  {isOnline ? 'Connected' : 'Offline'}
-                </Badge>
+        {/* KPI Banner */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="Local Pending Queue"
+            value={pendingCount.toString()}
+            subtext={`${(totalPendingBytes / 1024).toFixed(1)} KB waiting for signal`}
+            icon={<HardDrive className="w-5 h-5 text-amber-600" />}
+          />
+          <StatCard
+            title="Bandwidth Compression"
+            value="82% Avg."
+            subtext="CBOR + Delta state encoding"
+            icon={<Zap className="w-5 h-5 text-emerald-600" />}
+          />
+          <StatCard
+            title="Active Edge Devices"
+            value={devices.length.toString()}
+            subtext="Rugged Tabs & ESP32 Nodes"
+            icon={<Cpu className="w-5 h-5 text-blue-600" />}
+          />
+          <StatCard
+            title="Sync Reliability"
+            value="100% Idempotent"
+            subtext="Zero duplicate batch entries"
+            icon={<ShieldCheck className="w-5 h-5 text-teal-600" />}
+          />
+        </div>
+
+        {/* Offline-First Engine Banner */}
+        <Card className="border-0 shadow-lg bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 text-white">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
+                  <Signal className="w-3.5 h-3.5" />
+                  IndexedDB Local Queue + Opportunistic Background Sync
+                </div>
+                <h3 className="text-xl font-bold">Never Block Field Workers in Dead Zones</h3>
+                <p className="text-slate-300 text-sm max-w-2xl">
+                  Village waste collectors can scan QR tokens, weigh bags, record citizen pickups, and log expenses 100% offline. Data is packed into lightweight micro-payloads and transmitted automatically whenever a 2G/GPRS signal ping is detected.
+                </p>
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Local SQLite / IndexedDB cache holds 1 pending transaction.
-              </p>
+              <Button
+                onClick={handleFlushQueue}
+                disabled={syncing || pendingCount === 0}
+                className="bg-white text-slate-950 hover:bg-slate-100 font-bold shrink-0 shadow-md py-6 px-5"
+              >
+                {syncing ? (
+                  <span className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin" /> Compressing &amp; Syncing...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <ArrowUpDown className="w-4 h-4 text-emerald-600" />
+                    Flush Edge Queue ({pendingCount} pending)
+                  </span>
+                )}
+              </Button>
             </div>
+
+            {syncComplete && (
+              <div className="mt-4 p-3 bg-emerald-500/20 border border-emerald-400/40 rounded-lg flex items-center gap-2 text-emerald-200 text-xs">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                Edge sync successful! All {queue.length} offline operations verified against central ledger with zero packet loss.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Field Devices Status Grid */}
+        <div>
+          <div className="mb-3">
+            <h3 className="text-lg font-bold text-foreground">Registered Rural Edge Nodes &amp; Handhelds</h3>
+            <p className="text-xs text-muted-foreground">Monitors battery, cellular signal dBm, and queue lag across Gram Panchayats.</p>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsOnline(!isOnline)}
-              className="text-xs flex-1 sm:flex-none"
-            >
-              Simulate {isOnline ? 'Network Drop' : 'Network Reconnect'}
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSyncAll}
-              disabled={isSyncing}
-              className="text-xs gap-1.5 flex-1 sm:flex-none"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Reconciling...' : 'Sync Pending Items'}</span>
-            </Button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {devices.map((d) => (
+              <Card key={d.deviceId} className="border border-border">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="font-bold text-sm text-foreground flex items-center gap-1.5">
+                      <Smartphone className="w-4 h-4 text-emerald-700" />
+                      {d.deviceName}
+                    </div>
+                    <Badge
+                      className={
+                        d.networkType === '2G'
+                          ? 'bg-amber-100 text-amber-800 border-amber-300'
+                          : d.networkType === 'OFFLINE'
+                          ? 'bg-slate-200 text-slate-800'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }
+                    >
+                      {d.networkType === 'OFFLINE' ? 'Offline' : `${d.networkType} (${d.signalDbm} dBm)`}
+                    </Badge>
+                  </div>
+                  <CardDescription className="text-xs">{d.operatorRole} • {d.assignedVillage}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 text-xs font-mono pt-1 pb-4">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Pending Local:</span>
+                    <strong className={d.pendingQueueCount > 0 ? 'text-amber-600' : 'text-emerald-600'}>
+                      {d.pendingQueueCount} items
+                    </strong>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Synced Lifetime:</span>
+                    <span className="text-foreground">{d.totalSyncedPayloads} payloads</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Compression:</span>
+                    <span className="text-emerald-700 font-semibold">{d.compressionRatio}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground text-[10px] pt-1 border-t border-border">
+                    <span>Last Heartbeat:</span>
+                    <span>{d.lastSyncAt}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
 
-        {/* Sync Queue Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">IndexedDB Queue Entries</CardTitle>
-            <CardDescription>
-              Local-first transactions waiting for cryptographic signature confirmation from central server
-            </CardDescription>
+        {/* Local Offline Queue Ledger */}
+        <Card className="border border-border shadow-sm">
+          <CardHeader className="pb-3 border-b border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Database className="w-4 h-4 text-foreground" /> Client-Side Offline Storage Queue (IndexedDB)
+                </CardTitle>
+                <CardDescription>
+                  Idempotent operations queued with cryptographic client IDs to prevent double-counting.
+                </CardDescription>
+              </div>
+              <Badge variant="outline" className="font-mono text-xs">
+                {pendingCount} waiting / {syncedCount} flushed
+              </Badge>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-gray-50 text-gray-500 uppercase tracking-wider text-[10px] border-y border-gray-100">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-muted/50 text-xs font-semibold uppercase text-muted-foreground border-b border-border">
                   <tr>
-                    <th className="py-3 px-4">Tx ID</th>
-                    <th className="py-3 px-4">Operation</th>
+                    <th className="py-3 px-4">Queue ID &amp; Device</th>
+                    <th className="py-3 px-4">Operation Type</th>
                     <th className="py-3 px-4">Payload Summary</th>
-                    <th className="py-3 px-4">Timestamp</th>
-                    <th className="py-3 px-4">Retries</th>
-                    <th className="py-3 px-4">Sync Status</th>
+                    <th className="py-3 px-4">Captured (Offline)</th>
+                    <th className="py-3 px-4">Size</th>
+                    <th className="py-3 px-4">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border">
                   {queue.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50/60">
-                      <td className="py-3 px-4 font-mono font-bold text-gray-900">{item.id}</td>
-                      <td className="py-3 px-4 font-semibold text-gray-800">{item.operation}</td>
-                      <td className="py-3 px-4 text-gray-700">{item.payloadSummary}</td>
-                      <td className="py-3 px-4 text-gray-500 whitespace-nowrap">{item.timestamp}</td>
-                      <td className="py-3 px-4 text-gray-700">{item.retryCount}</td>
+                    <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                       <td className="py-3 px-4">
-                        <Badge variant={item.status === 'SYNCED' ? 'success' : 'warning'}>
+                        <div className="font-semibold text-foreground font-mono">{item.id}</div>
+                        <div className="text-[11px] text-muted-foreground">{item.deviceId}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className="font-mono text-[10px] bg-muted/40">
+                          {item.operationType}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-xs text-foreground font-medium">
+                        {item.summary}
+                      </td>
+                      <td className="py-3 px-4 text-xs text-muted-foreground">
+                        {item.capturedAt}
+                      </td>
+                      <td className="py-3 px-4 text-xs font-mono text-muted-foreground">
+                        {item.payloadBytes} bytes
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge
+                          className={
+                            item.status === 'SYNCED'
+                              ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                              : 'bg-amber-100 text-amber-800 border-amber-300'
+                          }
+                        >
                           {item.status}
                         </Badge>
                       </td>

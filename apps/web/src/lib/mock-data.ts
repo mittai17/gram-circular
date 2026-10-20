@@ -538,3 +538,636 @@ export const MOCK_ANOMALIES: AnomalyRecord[] = [
     location: 'SIPCOT Recycler Gate 3',
   },
 ];
+
+// ==========================================
+// MLP CONSTRUCTION UPCYCLING MOCK DATA
+// ==========================================
+export interface MockProductionRun {
+  id: string;
+  runCode: string;
+  mrfName: string;
+  productType: 'PAVER_BLOCK' | 'FENCING_POST' | 'ROOF_SHEET' | 'ROAD_ADDITIVE';
+  productName: string;
+  status: 'COMPLETED' | 'IN_PROGRESS' | 'FAILED';
+  mlpInputKg: number;
+  sandInputKg: number;
+  binderInputKg: number;
+  outputQuantity: number;
+  outputUnit: string;
+  yieldRatioPercent: number;
+  grade: 'A' | 'B' | 'C';
+  compressiveStrengthMpa: number;
+  waterAbsorptionPercent: number;
+  energyKwh: number;
+  operatorName: string;
+  machineId: string;
+  sourceBatches: string[];
+  createdAt: string;
+}
+
+export const MOCK_PRODUCTION_RUNS: MockProductionRun[] = [
+  {
+    id: 'PRD-001',
+    runCode: 'RUN-2026-PV-081',
+    mrfName: 'Thiruvallur Central PWMU',
+    productType: 'PAVER_BLOCK',
+    productName: 'EcoPave M30 Interlocking Paver (MLP 30%)',
+    status: 'COMPLETED',
+    mlpInputKg: 360,
+    sandInputKg: 720,
+    binderInputKg: 120,
+    outputQuantity: 480,
+    outputUnit: 'Blocks',
+    yieldRatioPercent: 96.5,
+    grade: 'A',
+    compressiveStrengthMpa: 34.2,
+    waterAbsorptionPercent: 3.1,
+    energyKwh: 48.5,
+    operatorName: 'Murugan K. (Shift A)',
+    machineId: 'HYD-PRESS-02',
+    sourceBatches: ['BAT-2026-10-001', 'BAT-2026-10-002'],
+    createdAt: '18 Oct 2026, 09:30 AM',
+  },
+  {
+    id: 'PRD-002',
+    runCode: 'RUN-2026-FP-042',
+    mrfName: 'Thiruvallur Central PWMU',
+    productType: 'FENCING_POST',
+    productName: 'Agrishield 6ft Recycled Composite Post',
+    status: 'COMPLETED',
+    mlpInputKg: 280,
+    sandInputKg: 140,
+    binderInputKg: 70,
+    outputQuantity: 35,
+    outputUnit: 'Poles',
+    yieldRatioPercent: 94.0,
+    grade: 'A',
+    compressiveStrengthMpa: 28.6,
+    waterAbsorptionPercent: 1.8,
+    energyKwh: 62.0,
+    operatorName: 'Selvam R.',
+    machineId: 'EXTRUDER-01',
+    sourceBatches: ['BAT-2026-10-003'],
+    createdAt: '17 Oct 2026, 14:15 PM',
+  },
+  {
+    id: 'PRD-003',
+    runCode: 'RUN-2026-RD-019',
+    mrfName: 'Thiruvallur Central PWMU',
+    productType: 'ROAD_ADDITIVE',
+    productName: 'IRC:SP:98 Shredded MLP Bitumen Modifier (2-4mm)',
+    status: 'COMPLETED',
+    mlpInputKg: 500,
+    sandInputKg: 0,
+    binderInputKg: 0,
+    outputQuantity: 490,
+    outputUnit: 'kg',
+    yieldRatioPercent: 98.0,
+    grade: 'A',
+    compressiveStrengthMpa: 0,
+    waterAbsorptionPercent: 0.4,
+    energyKwh: 34.0,
+    operatorName: 'Karthik V.',
+    machineId: 'SHREDDER-HEAVY-03',
+    sourceBatches: ['BAT-2026-10-004', 'BAT-2026-10-005'],
+    createdAt: '16 Oct 2026, 11:00 AM',
+  },
+  {
+    id: 'PRD-004',
+    runCode: 'RUN-2026-RS-008',
+    mrfName: 'Thiruvallur Central PWMU',
+    productType: 'ROOF_SHEET',
+    productName: 'Corrugated Thermal Insulated Roofing Sheet (8ft)',
+    status: 'IN_PROGRESS',
+    mlpInputKg: 220,
+    sandInputKg: 110,
+    binderInputKg: 40,
+    outputQuantity: 0,
+    outputUnit: 'Sheets',
+    yieldRatioPercent: 0,
+    grade: 'B',
+    compressiveStrengthMpa: 0,
+    waterAbsorptionPercent: 0,
+    energyKwh: 18.2,
+    operatorName: 'Murugan K.',
+    machineId: 'HOT-PRESS-LINE-1',
+    sourceBatches: ['BAT-2026-10-006'],
+    createdAt: '20 Oct 2026, 08:00 AM',
+  },
+];
+
+// ==========================================
+// DEMAND-DRIVEN DYNAMIC ROUTING MOCK DATA
+// ==========================================
+export interface MockPickupRequest {
+  id: string;
+  requestCode: string;
+  villageName: string;
+  collectionPointName: string;
+  fillLevelPercent: number;
+  estimatedWeightKg: number;
+  urgency: 'CRITICAL' | 'HIGH' | 'NORMAL' | 'LOW';
+  status: 'PENDING' | 'ASSIGNED' | 'COMPLETED';
+  requestType: 'BIN_OVERFLOW_IOT' | 'GP_ON_DEMAND' | 'WEEKLY_SCHEDULED';
+  assignedVehicle?: string;
+  createdAt: string;
+}
+
+export const MOCK_PICKUP_REQUESTS: MockPickupRequest[] = [
+  {
+    id: 'REQ-101',
+    requestCode: 'PICK-2026-101',
+    villageName: 'Perambakkam',
+    collectionPointName: 'Weekly Shandy Market Gate',
+    fillLevelPercent: 96,
+    estimatedWeightKg: 85,
+    urgency: 'CRITICAL',
+    status: 'PENDING',
+    requestType: 'BIN_OVERFLOW_IOT',
+    createdAt: '20 Oct 2026, 07:15 AM',
+  },
+  {
+    id: 'REQ-102',
+    requestCode: 'PICK-2026-102',
+    villageName: 'Kadambathur',
+    collectionPointName: 'Panchayat Union Office Bin',
+    fillLevelPercent: 88,
+    estimatedWeightKg: 62,
+    urgency: 'HIGH',
+    status: 'PENDING',
+    requestType: 'BIN_OVERFLOW_IOT',
+    createdAt: '20 Oct 2026, 08:30 AM',
+  },
+  {
+    id: 'REQ-103',
+    requestCode: 'PICK-2026-103',
+    villageName: 'Tiruvallur Block',
+    collectionPointName: 'Community Health Centre',
+    fillLevelPercent: 78,
+    estimatedWeightKg: 44,
+    urgency: 'NORMAL',
+    status: 'ASSIGNED',
+    assignedVehicle: 'TN-20-CZ-4412 (E-Tipper)',
+    requestType: 'WEEKLY_SCHEDULED',
+    createdAt: '20 Oct 2026, 06:45 AM',
+  },
+  {
+    id: 'REQ-104',
+    requestCode: 'PICK-2026-104',
+    villageName: 'Manavala Nagar',
+    collectionPointName: 'Bus Terminus Bin 2',
+    fillLevelPercent: 91,
+    estimatedWeightKg: 70,
+    urgency: 'HIGH',
+    status: 'PENDING',
+    requestType: 'GP_ON_DEMAND',
+    createdAt: '20 Oct 2026, 09:10 AM',
+  },
+];
+
+export interface MockOptimizationLog {
+  id: string;
+  planName: string;
+  triggerType: string;
+  stopsCount: number;
+  baselineDistanceKm: number;
+  optimizedDistanceKm: number;
+  distanceSavedKm: number;
+  fuelSavedLitres: number;
+  fuelSavedINR: number;
+  co2SavedKg: number;
+  solverDurationMs: number;
+  algorithm: string;
+  timestamp: string;
+}
+
+export const MOCK_OPTIMIZATION_LOGS: MockOptimizationLog[] = [
+  {
+    id: 'OPT-301',
+    planName: 'Morning Circuit - Tiruvallur East Corridor',
+    triggerType: 'IoT Fill Threshold (>85%)',
+    stopsCount: 7,
+    baselineDistanceKm: 46.8,
+    optimizedDistanceKm: 31.4,
+    distanceSavedKm: 15.4,
+    fuelSavedLitres: 1.93,
+    fuelSavedINR: 177.56,
+    co2SavedKg: 5.17,
+    solverDurationMs: 420,
+    algorithm: 'OR-Tools Guided Local Search (CVRP)',
+    timestamp: '20 Oct 2026, 07:30 AM',
+  },
+  {
+    id: 'OPT-300',
+    planName: 'Kadambathur Cluster Demand Re-route',
+    triggerType: 'On-Demand GP Alert',
+    stopsCount: 5,
+    baselineDistanceKm: 38.2,
+    optimizedDistanceKm: 27.6,
+    distanceSavedKm: 10.6,
+    fuelSavedLitres: 1.33,
+    fuelSavedINR: 122.36,
+    co2SavedKg: 3.56,
+    solverDurationMs: 310,
+    algorithm: 'OR-Tools Guided Local Search (CVRP)',
+    timestamp: '19 Oct 2026, 14:00 PM',
+  },
+  {
+    id: 'OPT-299',
+    planName: 'Weekend Bulk Aggregation Route',
+    triggerType: 'Scheduled Sunday Run',
+    stopsCount: 9,
+    baselineDistanceKm: 62.5,
+    optimizedDistanceKm: 44.0,
+    distanceSavedKm: 18.5,
+    fuelSavedLitres: 2.31,
+    fuelSavedINR: 212.52,
+    co2SavedKg: 6.19,
+    solverDurationMs: 580,
+    algorithm: 'OR-Tools Guided Local Search (CVRP)',
+    timestamp: '18 Oct 2026, 06:15 AM',
+  },
+];
+
+// ==========================================
+// PWMU O&M FINANCIAL SUSTAINABILITY MOCK DATA
+// ==========================================
+export interface MockFinancialEntry {
+  id: string;
+  type: 'EXPENSE' | 'REVENUE';
+  categoryOrSource: string;
+  description: string;
+  amountINR: number;
+  periodDate: string;
+  recordedBy: string;
+}
+
+export const MOCK_OPERATIONAL_FINANCES: {
+  monthlySummary: {
+    totalRevenueINR: number;
+    totalExpenseINR: number;
+    netBalanceINR: number;
+    recoveryRatioPercent: number;
+    costPerKgProcessedINR: number;
+    revenuePerKgProcessedINR: number;
+  };
+  expenses: MockFinancialEntry[];
+  revenues: MockFinancialEntry[];
+} = {
+  monthlySummary: {
+    totalRevenueINR: 184500,
+    totalExpenseINR: 142200,
+    netBalanceINR: 42300,
+    recoveryRatioPercent: 129.7, // > 100% means self-sustaining!
+    costPerKgProcessedINR: 9.48,
+    revenuePerKgProcessedINR: 12.30,
+  },
+  expenses: [
+    {
+      id: 'EXP-101',
+      type: 'EXPENSE',
+      categoryOrSource: 'LABOR',
+      description: 'SHG Machine Operators & Sorters (6 staff x ₹12,000/mo)',
+      amountINR: 72000,
+      periodDate: '15 Oct 2026',
+      recordedBy: 'Accounts Officer R. Devi',
+    },
+    {
+      id: 'EXP-102',
+      type: 'EXPENSE',
+      categoryOrSource: 'ELECTRICITY',
+      description: 'PWMU Industrial Grid Power (TANGEDCO Tariff V)',
+      amountINR: 28400,
+      periodDate: '10 Oct 2026',
+      recordedBy: 'Accounts Officer R. Devi',
+    },
+    {
+      id: 'EXP-103',
+      type: 'EXPENSE',
+      categoryOrSource: 'FUEL',
+      description: 'Diesel for 2 E-Tippers & Pickup Van (aggregation routes)',
+      amountINR: 22800,
+      periodDate: '18 Oct 2026',
+      recordedBy: 'Fleet Supervisor S. Balan',
+    },
+    {
+      id: 'EXP-104',
+      type: 'EXPENSE',
+      categoryOrSource: 'MAINTENANCE',
+      description: 'Hydraulic Press seal replacement & shredder blade sharpening',
+      amountINR: 14000,
+      periodDate: '08 Oct 2026',
+      recordedBy: 'Plant Manager K. Murugan',
+    },
+    {
+      id: 'EXP-105',
+      type: 'EXPENSE',
+      categoryOrSource: 'CONSUMABLES',
+      description: 'Binding wire, QR bale tags, safety gloves & PPE kit refill',
+      amountINR: 5000,
+      periodDate: '04 Oct 2026',
+      recordedBy: 'Plant Manager K. Murugan',
+    },
+  ],
+  revenues: [
+    {
+      id: 'REV-201',
+      type: 'REVENUE',
+      categoryOrSource: 'UPCYCLED_PRODUCT',
+      description: 'Sale of 12,000 EcoPave blocks to Kadambathur GP for village roads',
+      amountINR: 96000,
+      periodDate: '12 Oct 2026',
+      recordedBy: 'Marketing Lead T. Ramesh',
+    },
+    {
+      id: 'REV-202',
+      type: 'REVENUE',
+      categoryOrSource: 'RECYCLER_SALE',
+      description: 'Dispatch of 4.2 MT Baled Rigid HDPE & PP to Apex Recyclers',
+      amountINR: 46200,
+      periodDate: '14 Oct 2026',
+      recordedBy: 'Logistics Desk',
+    },
+    {
+      id: 'REV-203',
+      type: 'REVENUE',
+      categoryOrSource: 'EPR_CREDIT',
+      description: 'CPCB EPR Certificate monetization (Category III MLP, ₹1.8/kg)',
+      amountINR: 27000,
+      periodDate: '16 Oct 2026',
+      recordedBy: 'Compliance Desk',
+    },
+    {
+      id: 'REV-204',
+      type: 'REVENUE',
+      categoryOrSource: 'GP_FEE',
+      description: 'Monthly SWM user fee aggregation contribution from 5 Gram Panchayats',
+      amountINR: 15300,
+      periodDate: '01 Oct 2026',
+      recordedBy: 'Panchayat Liaison',
+    },
+  ],
+};
+
+// ==========================================
+// FORWARD LINKAGE & PWD MARKETPLACE MOCK DATA
+// ==========================================
+export interface MockProduct {
+  id: string;
+  name: string;
+  productType: 'PAVER_BLOCK' | 'FENCING_POST' | 'ROOF_SHEET' | 'ROAD_ADDITIVE';
+  specification: string;
+  unitPriceINR: number;
+  unit: string;
+  availableStock: number;
+  mlpContentKgPerUnit: number;
+  standardCompliance: string;
+  testedStrength: string;
+  photoUrl: string;
+  inStock: boolean;
+}
+
+export const MOCK_PRODUCTS: MockProduct[] = [
+  {
+    id: 'PROD-01',
+    name: 'EcoPave M30 Interlocking Paver (Zig-Zag 60mm)',
+    productType: 'PAVER_BLOCK',
+    specification: 'Heavy duty composite paver block. Made with 30% cleaned post-consumer MLP + M-Sand + Cement.',
+    unitPriceINR: 8.50,
+    unit: 'Block',
+    availableStock: 14500,
+    mlpContentKgPerUnit: 0.75,
+    standardCompliance: 'IS 15658:2006 Precast Concrete Blocks',
+    testedStrength: '34.2 MPa Compressive Strength',
+    photoUrl: '/images/products/paver.jpg',
+    inStock: true,
+  },
+  {
+    id: 'PROD-02',
+    name: 'Agrishield 6ft Recycled Composite Fencing Post',
+    productType: 'FENCING_POST',
+    specification: 'Weatherproof, termite-resistant post for agricultural boundary fencing. Replaces concrete or wood.',
+    unitPriceINR: 240.00,
+    unit: 'Post',
+    availableStock: 420,
+    mlpContentKgPerUnit: 8.0,
+    standardCompliance: 'Rural Infrastructure Guideline R-2024',
+    testedStrength: '28.6 MPa Flexural Strength',
+    photoUrl: '/images/products/post.jpg',
+    inStock: true,
+  },
+  {
+    id: 'PROD-03',
+    name: 'IRC:SP:98 Shredded MLP Bitumen Modifier (2-4mm)',
+    productType: 'ROAD_ADDITIVE',
+    specification: 'Cleaned, shredded multi-layer plastic flakes for hot-mix bitumen rural road surfacing. Improves Marshall Stability by 22%.',
+    unitPriceINR: 14.00,
+    unit: 'kg',
+    availableStock: 6800,
+    mlpContentKgPerUnit: 1.0,
+    standardCompliance: 'IRC:SP:98-2020 Guidelines for Polymer Modified Bitumen',
+    testedStrength: 'Marshall Stability 14.8 kN (Req >12 kN)',
+    photoUrl: '/images/products/flakes.jpg',
+    inStock: true,
+  },
+  {
+    id: 'PROD-04',
+    name: 'Corrugated Thermal Insulated Roofing Sheet (8ft x 3ft)',
+    productType: 'ROOF_SHEET',
+    specification: 'High acoustic and thermal insulation sheet for village sheds, cow shelters, and community storage.',
+    unitPriceINR: 420.00,
+    unit: 'Sheet',
+    availableStock: 165,
+    mlpContentKgPerUnit: 7.2,
+    standardCompliance: 'CPWD Green Building Spec Annexure B',
+    testedStrength: 'Impact Resistant (>200 Joules)',
+    photoUrl: '/images/products/sheet.jpg',
+    inStock: true,
+  },
+];
+
+export interface MockSaleOrder {
+  id: string;
+  orderCode: string;
+  buyerName: string;
+  buyerType: 'GRAM_PANCHAYAT' | 'PWD' | 'CONTRACTOR' | 'INDIVIDUAL';
+  deliveryAddress: string;
+  items: { productName: string; quantity: number; unitPriceINR: number; totalINR: number }[];
+  totalAmountINR: number;
+  status: 'PENDING' | 'CONFIRMED' | 'DISPATCHED' | 'DELIVERED';
+  orderDate: string;
+  deliveryDate?: string;
+  notes: string;
+}
+
+export const MOCK_ORDERS: MockSaleOrder[] = [
+  {
+    id: 'ORD-501',
+    orderCode: 'PO-PWD-2026-089',
+    buyerName: 'Tamil Nadu Highways & Rural Roads Wing (PWD)',
+    buyerType: 'PWD',
+    deliveryAddress: 'SH-57 Km 14+200 Stretch Worksite, Tiruvallur',
+    items: [
+      {
+        productName: 'IRC:SP:98 Shredded MLP Bitumen Modifier (2-4mm)',
+        quantity: 4000,
+        unitPriceINR: 14.00,
+        totalINR: 56000,
+      },
+    ],
+    totalAmountINR: 56000,
+    status: 'DELIVERED',
+    orderDate: '10 Oct 2026',
+    deliveryDate: '15 Oct 2026',
+    notes: 'For 3.2 km rural PMGSY asphalt widening work under IRC:SP:98 norms.',
+  },
+  {
+    id: 'ORD-502',
+    orderCode: 'PO-GP-2026-012',
+    buyerName: 'Kadambathur Village Gram Panchayat',
+    buyerType: 'GRAM_PANCHAYAT',
+    deliveryAddress: 'Panchayat Union School Play Area, Kadambathur',
+    items: [
+      {
+        productName: 'EcoPave M30 Interlocking Paver (Zig-Zag 60mm)',
+        quantity: 5000,
+        unitPriceINR: 8.50,
+        totalINR: 42500,
+      },
+      {
+        productName: 'Agrishield 6ft Recycled Composite Fencing Post',
+        quantity: 40,
+        unitPriceINR: 240.00,
+        totalINR: 9600,
+      },
+    ],
+    totalAmountINR: 52100,
+    status: 'DISPATCHED',
+    orderDate: '16 Oct 2026',
+    deliveryDate: '22 Oct 2026',
+    notes: 'School approach path paving funded under 15th Finance Commission grant.',
+  },
+  {
+    id: 'ORD-503',
+    orderCode: 'PO-CON-2026-044',
+    buyerName: 'Sri Balaji Infrastructure & Civil Works',
+    buyerType: 'CONTRACTOR',
+    deliveryAddress: 'Arakkonam Rural Sub-division Worksite',
+    items: [
+      {
+        productName: 'EcoPave M30 Interlocking Paver (Zig-Zag 60mm)',
+        quantity: 8000,
+        unitPriceINR: 8.50,
+        totalINR: 68000,
+      },
+    ],
+    totalAmountINR: 68000,
+    status: 'PENDING',
+    orderDate: '19 Oct 2026',
+    notes: 'Awaiting truck dispatch scheduling from Thiruvallur MRF yard.',
+  },
+];
+
+// ==========================================
+// LOW-BANDWIDTH EDGE SYNC MOCK DATA
+// ==========================================
+export interface MockEdgeDevice {
+  deviceId: string;
+  deviceName: string;
+  operatorRole: string;
+  assignedVillage: string;
+  lastSyncAt: string;
+  networkType: '2G' | '3G' | '4G' | 'OFFLINE';
+  signalDbm: number;
+  pendingQueueCount: number;
+  totalSyncedPayloads: number;
+  compressionRatio: string;
+}
+
+export const MOCK_EDGE_DEVICES: MockEdgeDevice[] = [
+  {
+    deviceId: 'DEV-TAB-01',
+    deviceName: 'Rugged Worker Tab #1',
+    operatorRole: 'Village Waste Collection Agent',
+    assignedVillage: 'Shanti Nagar & Perambakkam',
+    lastSyncAt: 'Just now (18:15 PM)',
+    networkType: '2G',
+    signalDbm: -92,
+    pendingQueueCount: 3,
+    totalSyncedPayloads: 142,
+    compressionRatio: '78% reduction (Gzip / CBOR)',
+  },
+  {
+    deviceId: 'DEV-TAB-02',
+    deviceName: 'Rugged Worker Tab #2',
+    operatorRole: 'Village Waste Collection Agent',
+    assignedVillage: 'Kadambathur Cluster',
+    lastSyncAt: '42 mins ago',
+    networkType: 'OFFLINE',
+    signalDbm: -110,
+    pendingQueueCount: 7,
+    totalSyncedPayloads: 98,
+    compressionRatio: '82% reduction (Gzip / CBOR)',
+  },
+  {
+    deviceId: 'DEV-IOT-ESP32-A',
+    deviceName: 'Smart Bin Gateway #A (ESP32-S3)',
+    operatorRole: 'Ultrasonic Fill & Load Cell Node',
+    assignedVillage: 'Weekly Shandy Market Gate',
+    lastSyncAt: '4 mins ago',
+    networkType: '2G',
+    signalDbm: -85,
+    pendingQueueCount: 0,
+    totalSyncedPayloads: 648,
+    compressionRatio: '91% delta binary packet',
+  },
+];
+
+export interface MockOfflineQueueItem {
+  id: string;
+  deviceId: string;
+  operationType: 'CREATE_BATCH' | 'UPDATE_BIN_FILL' | 'RECORD_COLLECTION' | 'LOG_EXPENSE';
+  summary: string;
+  capturedAt: string;
+  status: 'QUEUED' | 'SYNCED' | 'FAILED';
+  payloadBytes: number;
+}
+
+export const MOCK_OFFLINE_QUEUE: MockOfflineQueueItem[] = [
+  {
+    id: 'Q-901',
+    deviceId: 'DEV-TAB-02',
+    operationType: 'CREATE_BATCH',
+    summary: 'Bagged 18.5 kg MLP at Shanti Nagar Community Bin #2',
+    capturedAt: '20 Oct 2026, 16:40 PM',
+    status: 'QUEUED',
+    payloadBytes: 342,
+  },
+  {
+    id: 'Q-902',
+    deviceId: 'DEV-TAB-02',
+    operationType: 'UPDATE_BIN_FILL',
+    summary: 'Bin CP-04 fill level reading: 92% (Manual check)',
+    capturedAt: '20 Oct 2026, 17:05 PM',
+    status: 'QUEUED',
+    payloadBytes: 184,
+  },
+  {
+    id: 'Q-903',
+    deviceId: 'DEV-TAB-02',
+    operationType: 'RECORD_COLLECTION',
+    summary: 'Citizen pickup confirmation at Door 44, North Street',
+    capturedAt: '20 Oct 2026, 17:22 PM',
+    status: 'QUEUED',
+    payloadBytes: 210,
+  },
+  {
+    id: 'Q-900',
+    deviceId: 'DEV-TAB-01',
+    operationType: 'CREATE_BATCH',
+    summary: 'Batch B-092 weighed at Perambakkam Center (24.0 kg)',
+    capturedAt: '20 Oct 2026, 15:30 PM',
+    status: 'SYNCED',
+    payloadBytes: 318,
+  },
+];

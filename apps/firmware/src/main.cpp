@@ -1,7 +1,6 @@
 /**
  * GRAM-CIRCULAR Smart Weighing & Bin Telemetry Node
  * Firmware for ESP32 DevKit V1
- * Smart India Hackathon (SIH 2026)
  *
  * Hardware Peripherals:
  *  - HX711 24-bit ADC Load Cell Amplifier (Weight telemetry)
@@ -32,7 +31,7 @@
 // -----------------------------------------------------------------------------
 const char* DEVICE_ID       = "ESP32-SCALE-001";
 const char* WIFI_SSID       = "GRAM-CIRCULAR-NET";
-const char* WIFI_PASSWORD   = "sih2026rural";
+const char* WIFI_PASSWORD   = "gramrural2026";
 const char* API_SERVER_URL  = "http://192.168.1.100:4000/api/v1/devices/reading";
 
 // Bin Geometry (Centimeters)
@@ -291,7 +290,7 @@ void setup() {
 
     Serial.println("\n=======================================================");
     Serial.println("  GRAM-CIRCULAR IoT Edge Node (ESP32)");
-    Serial.println("  Smart Waste Management & Telemetry System (SIH 2026)");
+    Serial.println("  Smart Waste Management & Telemetry System");
     Serial.println("=======================================================");
 
     pinMode(STATUS_LED_PIN, OUTPUT);

@@ -16,3 +16,4 @@ venv/
 .vercel/
 *.tsbuildinfo
 .idea/
+package-lock.json

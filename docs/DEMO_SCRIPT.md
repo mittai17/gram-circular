@@ -1,15 +1,15 @@
-# GRAM-CIRCULAR: 5-Minute SIH 2026 Grand Finale Demo Script
+# GRAM-CIRCULAR: 5-Minute Grand Finale Demo Script
 
 **Platform**: GRAM-CIRCULAR (Rural Waste Traceability, Smart IoT Weighing & OR-Tools Logistics)  
 **Presenter Roles**: Lead Presenter + Live Platform Navigator  
-**Audience**: SIH Jury, Ministry of Environment & Panchayat Raj Evaluators  
+**Audience**: Evaluation Jury, Ministry of Environment & Panchayat Raj Evaluators  
 **Total Time**: Exactly 5 Minutes (300 Seconds)
 
 ---
 
 ## ⏱️ Minute-by-Minute Presentation Timeline
 
-| Timestamp | Phase | Role Screen | Key Talking Point / Action |
+| Timestamp | Stage | Role Screen | Key Talking Point / Action |
 | :---: | :--- | :--- | :--- |
 | **00:00 – 00:45** | **1. The Problem & Zero-Friction Role Selector** | Header Navigation | Rural MLP leakage, informal burning, and instant persona switching. |
 | **00:45 – 01:30** | **2. Admin Macro Analytics & Cluster Health** | `ADMIN` Dashboard | Real-time mass balance ledger, bin fill levels, and village maps. |

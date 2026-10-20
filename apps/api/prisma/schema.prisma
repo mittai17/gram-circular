@@ -46,6 +46,7 @@ model CollectionPoint {
   wasteBatches WasteBatch[]
   routeStops   RouteStop[]
   citizenReports CitizenReport[]
+  pickupRequests PickupRequest[]
 
   @@map("collection_points")
 }
@@ -467,4 +468,255 @@ model PoolingGroup {
   updatedAt       DateTime @updatedAt
 
   @@map("pooling_groups")
+}
+
+// ─── MLP Construction Upcycling ─────────────────────────────────────
+
+model ProductionRun {
+  id              String   @id @default(uuid())
+  runCode         String   @unique
+  mrfId           String
+  productType     String   // PAVER_BLOCK | FENCING_POST | ROOF_SHEET | ROAD_ADDITIVE | AGGLOMERATE
+  status          String   @default("IN_PROGRESS") // IN_PROGRESS | COMPLETED | FAILED
+
+  // Inputs
+  mlpInputKg      Decimal  @db.Decimal(10, 3)
+  sandInputKg     Decimal? @db.Decimal(10, 3)
+  binderInputKg   Decimal? @db.Decimal(10, 3)
+  otherInputKg    Decimal? @db.Decimal(10, 3)
+
+  // Outputs
+  outputQuantity  Int      @default(0)
+  outputUnit      String   // UNITS | KG
+  outputWeightKg  Decimal? @db.Decimal(10, 3)
+  yieldRatioPercent Decimal? @db.Decimal(5, 2)
+
+  // Quality
+  grade           String?  // A | B | C
+  qualityPassedAt DateTime?
+  compressiveStrengthMpa Decimal? @db.Decimal(6, 2)
+  waterAbsorptionPercent Decimal? @db.Decimal(5, 2)
+  qualityNotes    String?
+
+  // Traceability
+  operatorName    String
+  machineId       String?
+  energyKwh       Decimal? @db.Decimal(8, 3)
+  wasteLossKg     Decimal? @db.Decimal(8, 3)
+  notes           String?
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  batchInputs     ProductionBatchInput[]
+  saleLineItems   SaleLineItem[]
+
+  @@index([status])
+  @@index([productType])
+  @@map("production_runs")
+}
+
+model ProductionBatchInput {
+  id              String   @id @default(uuid())
+  productionRunId String
+  productionRun   ProductionRun @relation(fields: [productionRunId], references: [id])
+  wasteBatchId    String
+  weightUsedKg    Decimal  @db.Decimal(8, 3)
+  createdAt       DateTime @default(now())
+
+  @@map("production_batch_inputs")
+}
+
+// ─── Demand-Driven Dynamic Routing ────────────────────────────────────
+
+model PickupRequest {
+  id                String   @id @default(uuid())
+  collectionPointId String
+  collectionPoint   CollectionPoint @relation(fields: [collectionPointId], references: [id])
+  requestedBy       String
+  requestType       String   @default("OVERFLOW") // OVERFLOW | SCHEDULED | ON_DEMAND
+  estimatedWeightKg Decimal? @db.Decimal(8, 2)
+  fillLevelPercent  Int?
+  urgency           String   @default("NORMAL") // LOW | NORMAL | HIGH | CRITICAL
+  status            String   @default("PENDING") // PENDING | ASSIGNED | COMPLETED | CANCELLED
+  notes             String?
+  routePlanId       String?
+  assignedAt        DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([status])
+  @@map("pickup_requests")
+}
+
+model RouteOptimizationLog {
+  id                    String   @id @default(uuid())
+  routePlanId           String?
+  triggeredBy           String   // THRESHOLD | MANUAL | SCHEDULED | ON_DEMAND
+  baselineDistanceKm    Decimal  @db.Decimal(8, 2)
+  optimizedDistanceKm   Decimal  @db.Decimal(8, 2)
+  distanceSavedKm       Decimal  @db.Decimal(8, 2)
+  fuelSavedLitres       Decimal? @db.Decimal(8, 2)
+  fuelSavedINR          Decimal? @db.Decimal(10, 2)
+  co2SavedKg            Decimal? @db.Decimal(8, 3)
+  stopsCount            Int
+  algorithm             String   @default("GLS_CVRP")
+  solverDurationMs      Int?
+  createdAt             DateTime @default(now())
+
+  @@map("route_optimization_logs")
+}
+
+// ─── PWMU O&M Financial Sustainability ────────────────────────────────
+
+model OperationalExpense {
+  id           String   @id @default(uuid())
+  mrfId        String
+  category     String   // LABOR | FUEL | ELECTRICITY | MAINTENANCE | CONSUMABLES | OTHER
+  description  String
+  amountINR    Decimal  @db.Decimal(12, 2)
+  quantity     Decimal? @db.Decimal(10, 3)
+  unit         String?  // LITRE | KWH | DAY | UNIT
+  periodDate   DateTime
+  recordedBy   String
+  createdAt    DateTime @default(now())
+
+  @@index([category])
+  @@index([periodDate])
+  @@map("operational_expenses")
+}
+
+model RevenueEntry {
+  id           String   @id @default(uuid())
+  mrfId        String
+  source       String   // RECYCLER_SALE | UPCYCLED_PRODUCT | EPR_CREDIT | GP_FEE | GRANT
+  description  String
+  amountINR    Decimal  @db.Decimal(12, 2)
+  weightKg     Decimal? @db.Decimal(10, 3)
+  referenceId  String?
+  periodDate   DateTime
+  recordedBy   String
+  createdAt    DateTime @default(now())
+
+  @@index([source])
+  @@index([periodDate])
+  @@map("revenue_entries")
+}
+
+// ─── Forward Linkage & PWD Marketplace ────────────────────────────────
+
+model Product {
+  id              String   @id @default(uuid())
+  mrfId           String
+  productType     String   // PAVER_BLOCK | FENCING_POST | ROOF_SHEET | ROAD_ADDITIVE
+  name            String
+  description     String?
+  unitPriceINR    Decimal  @db.Decimal(10, 2)
+  availableQty    Int      @default(0)
+  unit            String   @default("UNITS")
+  grade           String?
+  photoUrl        String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  saleLineItems   SaleLineItem[]
+
+  @@map("products")
+}
+
+model SaleOrder {
+  id              String   @id @default(uuid())
+  orderCode       String   @unique
+  buyerName       String
+  buyerType       String   // GRAM_PANCHAYAT | PWD | CONTRACTOR | INDIVIDUAL | NGO
+  buyerContact    String
+  deliveryAddress String
+  status          String   @default("PENDING") // PENDING | CONFIRMED | DISPATCHED | DELIVERED | CANCELLED
+  totalAmountINR  Decimal  @db.Decimal(12, 2)
+  paidAmountINR   Decimal  @db.Decimal(12, 2) @default(0)
+  paymentStatus   String   @default("UNPAID") // UNPAID | PARTIAL | PAID
+  deliveryDate    DateTime?
+  notes           String?
+  createdBy       String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  lineItems       SaleLineItem[]
+  deliveryReceipt DeliveryReceipt?
+
+  @@index([status])
+  @@map("sale_orders")
+}
+
+model SaleLineItem {
+  id              String   @id @default(uuid())
+  saleOrderId     String
+  saleOrder       SaleOrder @relation(fields: [saleOrderId], references: [id])
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  productionRunId String?
+  productionRun   ProductionRun? @relation(fields: [productionRunId], references: [id])
+  quantity        Int
+  unitPriceINR    Decimal  @db.Decimal(10, 2)
+  totalINR        Decimal  @db.Decimal(12, 2)
+  createdAt       DateTime @default(now())
+
+  @@map("sale_line_items")
+}
+
+model DeliveryReceipt {
+  id              String   @id @default(uuid())
+  saleOrderId     String   @unique
+  saleOrder       SaleOrder @relation(fields: [saleOrderId], references: [id])
+  receivedBy      String
+  receivedQty     Int
+  condition       String   // GOOD | DAMAGED | PARTIAL
+  evidenceUrl     String?
+  notes           String?
+  receivedAt      DateTime @default(now())
+
+  @@map("delivery_receipts")
+}
+
+// ─── Low-Bandwidth Edge Sync ──────────────────────────────────────────
+
+model EdgeSyncPayload {
+  id                String   @id @default(uuid())
+  deviceId          String
+  payloadType       String   // BATCH | BIN_READING | CITIZEN_REPORT | PICKUP_REQUEST
+  compressedSizeBytes Int?
+  rawSizeBytes      Int?
+  payload           Json
+  status            String   @default("PENDING") // PENDING | PROCESSED | FAILED
+  retryCount        Int      @default(0)
+  lastError         String?
+  signalStrengthDbm Int?
+  networkType       String?  // 2G | 3G | 4G | WIFI | OFFLINE
+  processedAt       DateTime?
+  createdAt         DateTime @default(now())
+
+  @@index([status])
+  @@index([deviceId])
+  @@map("edge_sync_payloads")
+}
+
+model OfflineSyncQueue {
+  id                String   @id @default(uuid())
+  clientDeviceId    String
+  operationType     String   // CREATE_BATCH | UPDATE_BIN | REPORT_PICKUP | LOG_EXPENSE
+  clientOperationId String   @unique
+  payload           Json
+  compressedPayload String?
+  status            String   @default("QUEUED") // QUEUED | SYNCED | FAILED | DUPLICATE
+  syncedAt          DateTime?
+  errorMessage      String?
+  networkType       String?
+  createdAt         DateTime @default(now())
+
+  @@index([status])
+  @@index([clientDeviceId])
+  @@map("offline_sync_queue")
 }

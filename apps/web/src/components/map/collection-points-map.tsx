@@ -15,6 +15,14 @@ interface CollectionPointsMapProps {
   className?: string;
 }
 
+// Fix Leaflet's default icon URLs if fallback markers are used
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
 export default function CollectionPointsMap({
   points,
   selectedPointId,
@@ -22,12 +30,13 @@ export default function CollectionPointsMap({
   showRoute = false,
   center = [13.1438, 79.9132],
   zoom = 13,
-  className = 'h-full min-h-[460px] w-full rounded-xl overflow-hidden',
+  className = 'h-full min-h-[500px] w-full rounded-xl overflow-hidden',
 }: CollectionPointsMapProps) {
   const mapContainerRef = React.useRef<HTMLDivElement>(null);
   const mapInstanceRef = React.useRef<L.Map | null>(null);
   const markersRef = React.useRef<L.Marker[]>([]);
   const polylineRef = React.useRef<L.Polyline | null>(null);
+  const [activeTileLayer, setActiveTileLayer] = React.useState<'osm' | 'carto'>('osm');
 
   React.useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -37,21 +46,55 @@ export default function CollectionPointsMap({
         center,
         zoom,
         zoomControl: true,
+        attributionControl: true,
       });
 
-      // CartoDB Positron / OSM tiles for crisp, clean UI
-      L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        {
-          attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-          maxZoom: 19,
+      // Standard Official OpenStreetMap Layer
+      const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+        subdomains: ['a', 'b', 'c'],
+        maxZoom: 19,
+        crossOrigin: true,
+      });
+
+      // Fallback CartoDB Voyager Layer
+      const cartoLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19,
+        crossOrigin: true,
+      });
+
+      // Add default tile layer
+      osmLayer.addTo(map);
+
+      // Add layer error fallback
+      osmLayer.on('tileerror', () => {
+        console.warn('OpenStreetMap tile error, falling back to Carto Voyager');
+        if (!map.hasLayer(cartoLayer)) {
+          cartoLayer.addTo(map);
         }
-      ).addTo(map);
+      });
 
       mapInstanceRef.current = map;
+
+      // Invalidate size across multiple render frames to guarantee tiles populate
+      setTimeout(() => map.invalidateSize(), 100);
+      setTimeout(() => map.invalidateSize(), 300);
+      setTimeout(() => map.invalidateSize(), 800);
+
+      const handleResize = () => map.invalidateSize();
+      window.addEventListener('resize', handleResize);
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
     }
 
     const map = mapInstanceRef.current;
+    if (map) {
+      map.invalidateSize();
+    }
 
     // Clear old markers
     markersRef.current.forEach((m) => m.remove());
@@ -154,5 +197,13 @@ export default function CollectionPointsMap({
     };
   }, []);
 
-  return <div ref={mapContainerRef} className={className} />;
+  return (
+    <div className="relative w-full h-full min-h-[500px]">
+      <div
+        ref={mapContainerRef}
+        className={className}
+        style={{ minHeight: '500px', height: '100%', width: '100%', zIndex: 1 }}
+      />
+    </div>
+  );
 }

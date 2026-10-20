@@ -125,7 +125,7 @@ Budget-optimized for rural Gram Panchayat deployments:
 
 ## 🔄 Simulated Device Fallback Mode
 
-During hackathon presentations, rural field demos with poor WiFi, or test runs without physical ESP32 hardware attached, the GRAM-CIRCULAR platform automatically falls back to **Simulated Device Mode**:
+During live presentations, rural field demos with poor WiFi, or test runs without physical ESP32 hardware attached, the GRAM-CIRCULAR platform automatically falls back to **Simulated Device Mode**:
 
 1. **Automatic Heartbeat Detection**:
    The backend API tracks device pings. If an ESP32 hardware device is inactive or disconnected, the frontend and worker apps offer an **IoT Simulation Toggle**.

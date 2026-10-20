@@ -172,10 +172,10 @@ export default function DemoRoleSelector() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.sihBanner}>
+        <View style={styles.demoBanner}>
           <Sparkles size={14} color="#fef08a" />
-          <Text style={styles.sihBannerText}>
-            Smart India Hackathon 2026 • 5-Role Interactive Prototype
+          <Text style={styles.demoBannerText}>
+            Clean Rural Circular Economy • 5-Role Interactive Prototype
           </Text>
         </View>
       </View>
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-  sihBanner: {
+  demoBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     gap: 6,
   },
-  sihBannerText: {
+  demoBannerText: {
     color: '#fef08a',
     fontSize: 11,
     fontWeight: '600',

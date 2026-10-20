@@ -8,7 +8,7 @@ function qrToken(suffix?: string) {
 }
 
 async function main() {
-  console.log('Seeding GRAM-CIRCULAR SIH 2026 demo data...');
+  console.log('Seeding GRAM-CIRCULAR demo data...');
 
   // Cleanup in reverse dependency order
   await prisma.processingEvidence.deleteMany();
@@ -809,7 +809,7 @@ async function main() {
     ],
   });
 
-  console.log('✅ Seed complete with rich SIH 2026 demo data!');
+  console.log('✅ Seed complete with rich demo data!');
   console.log(`   Villages: 3`);
   console.log(`   Collection Points: 5 (CP-01 to CP-05)`);
   console.log(`   Bins: 8`);

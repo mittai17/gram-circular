@@ -1,7 +1,6 @@
 # GRAM-CIRCULAR: System Architecture & Technical Specification
 
 **Rural Multi-Layered Plastic (MLP) & Solid Waste Aggregation, Traceability, and Route Optimization Platform**  
-*Smart India Hackathon (SIH 2026)*
 
 ---
 
@@ -191,10 +190,10 @@ The automated audit worker executes every 15 minutes or upon each dispatch event
 
 ---
 
-## 6. Security, Offline Reliability & SIH Demo Architecture
+## 6. Security, Offline Reliability & Demo Architecture
 
-### Frictionless Role Switching for Hackathon Evaluation
-In traditional enterprise apps, testing multiple user journeys requires logging out, switching credentials, or clearing cookies. For the SIH 2026 jury evaluation:
+### Frictionless Role Switching for Stakeholder Evaluation
+In traditional enterprise apps, testing multiple user journeys requires logging out, switching credentials, or clearing cookies. For comprehensive stakeholder evaluation:
 - The top navigation bar houses a **Demo Role Selector**:
   - `ADMIN`: Macro Analytics, Cluster Maps, Fleet Route Planner.
   - `WORKER`: Fast Mobile Weighing, Bag Creation, Offline Sync Drawer.

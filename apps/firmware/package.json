@@ -15,7 +15,6 @@
     "hc-sr04",
     "iot",
     "firmware",
-    "smart-scale",
-    "sih2026"
+    "smart-scale"
   ]
 }

@@ -342,7 +342,7 @@ export default function AdminDashboardPage() {
           <Card className="lg:col-span-1">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold">Optimization Shortcuts</CardTitle>
-              <CardDescription>SIH Decision Support Tools</CardDescription>
+              <CardDescription>Decision Support Tools</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <Link

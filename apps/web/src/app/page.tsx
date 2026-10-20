@@ -21,6 +21,10 @@ import {
   Sparkles,
   BarChart3,
   ExternalLink,
+  Hammer,
+  ShoppingBag,
+  Signal,
+  Coins,
 } from 'lucide-react';
 
 interface RoleCardData {
@@ -201,7 +205,7 @@ export default function RootHomePage() {
 
   return (
     <div className="min-h-screen bg-[#f8faf9] flex flex-col text-gray-900 selection:bg-emerald-200">
-      {/* Top Government & SIH Header */}
+      {/* Top Government Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -213,9 +217,6 @@ export default function RootHomePage() {
                 <span className="font-extrabold text-lg text-[#0f3d24] tracking-tight uppercase">
                   GRAM-CIRCULAR
                 </span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-[#0f3d24] border border-emerald-300/60">
-                  SIH 2026
-                </span>
               </div>
               <p className="text-xs text-gray-500 font-medium">
                 Clean Villages · Circular India · Rural MLP Value Chain
@@ -224,10 +225,6 @@ export default function RootHomePage() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
-              <Shield className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Problem Statement ID: 26259</span>
-            </div>
             <button
               onClick={() => handleSelectRole('admin', '/admin/dashboard')}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#1a5c38] hover:bg-[#0f3d24] text-white text-xs font-bold transition-all shadow hover:shadow-md cursor-pointer"
@@ -244,7 +241,7 @@ export default function RootHomePage() {
         <div className="max-w-5xl mx-auto text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/80 border border-emerald-200 text-[#0f3d24] text-xs font-bold tracking-wide uppercase shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-            Smart India Hackathon 2026 — Ministry Evaluation Prototype
+            Rural Circular Economy Platform
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
@@ -390,6 +387,153 @@ export default function RootHomePage() {
           </div>
         </div>
 
+        {/* PWMU / MRF IMPLEMENTATION SHOWCASE */}
+        <div className="pt-6 border-t border-gray-200">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-2 mb-6">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">
+                PWMU &amp; MRF Management Solution
+              </span>
+              <h2 className="text-2xl font-bold text-gray-900 mt-2">
+                Core System Implementation Architecture
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Technical solutions addressing rural multi-layer plastic (MLP) management, dynamic logistics, and financial viability.
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 shrink-0">
+              End-to-End Circular Value Chain
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Card 1 */}
+            <div
+              onClick={() => handleSelectRole('mrf', '/mrf/manufacturing')}
+              className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                    Upcycling
+                  </span>
+                  <Hammer className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <h4 className="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">
+                  MLP Construction Upcycling
+                </h4>
+                <p className="text-[11px] text-gray-600 mt-1 leading-snug">
+                  High-pressure thermal press producing IS 15658 paver blocks, fencing posts &amp; IRC:SP:98 road flakes.
+                </p>
+              </div>
+              <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] font-semibold text-emerald-700">
+                <span>View Engine</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+
+            {/* Card 2 */}
+            <div
+              onClick={() => handleSelectRole('admin', '/admin/dynamic-routing')}
+              className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:border-blue-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                    Routing
+                  </span>
+                  <Route className="w-4 h-4 text-blue-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <h4 className="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                  Demand-Driven Dynamic Routing
+                </h4>
+                <p className="text-[11px] text-gray-600 mt-1 leading-snug">
+                  Eliminates empty rural runs with IoT fill thresholds (&gt;80%) &amp; Guided Local Search CVRP optimizer.
+                </p>
+              </div>
+              <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] font-semibold text-blue-700">
+                <span>View Routing</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+
+            {/* Card 3 */}
+            <div
+              onClick={() => handleSelectRole('admin', '/admin/sustainability')}
+              className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:border-purple-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-extrabold text-purple-700 bg-purple-50 px-2 py-0.5 rounded">
+                    Sustainability
+                  </span>
+                  <Coins className="w-4 h-4 text-purple-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <h4 className="text-sm font-bold text-gray-900 group-hover:text-purple-700 transition-colors">
+                  PWMU O&amp;M Sustainability
+                </h4>
+                <p className="text-[11px] text-gray-600 mt-1 leading-snug">
+                  Audited operating cost vs. revenue ledger proving financial self-sufficiency &amp; break-even ratio.
+                </p>
+              </div>
+              <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] font-semibold text-purple-700">
+                <span>View Ledger</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+
+            {/* Card 4 */}
+            <div
+              onClick={() => handleSelectRole('buyer', '/buyer/marketplace')}
+              className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:border-amber-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
+                    Marketplace
+                  </span>
+                  <ShoppingBag className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <h4 className="text-sm font-bold text-gray-900 group-hover:text-amber-700 transition-colors">
+                  Forward Linkage &amp; PWD Portal
+                </h4>
+                <p className="text-[11px] text-gray-600 mt-1 leading-snug">
+                  Direct procurement portal for Gram Panchayats, PWD highway wings, and civil contractors.
+                </p>
+              </div>
+              <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] font-semibold text-amber-700">
+                <span>Browse Store</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+
+            {/* Card 5 */}
+            <div
+              onClick={() => handleSelectRole('worker', '/worker/sync')}
+              className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:border-teal-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-extrabold text-teal-700 bg-teal-50 px-2 py-0.5 rounded">
+                    Edge Sync
+                  </span>
+                  <Signal className="w-4 h-4 text-teal-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <h4 className="text-sm font-bold text-gray-900 group-hover:text-teal-700 transition-colors">
+                  Low-Bandwidth Edge Sync
+                </h4>
+                <p className="text-[11px] text-gray-600 mt-1 leading-snug">
+                  Offline-first IndexedDB queue with 82% CBOR compression for dead zones and 2G connectivity.
+                </p>
+              </div>
+              <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] font-semibold text-teal-700">
+                <span>View Sync Queue</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Technical Innovation Highlights Grid */}
         <div className="pt-4 border-t border-gray-200">
           <div className="text-center max-w-2xl mx-auto mb-8">
@@ -397,7 +541,7 @@ export default function RootHomePage() {
               Core Technical Architecture
             </span>
             <h2 className="text-2xl font-bold text-gray-900 mt-2">
-              SIH 2026 Core Innovations
+              Core Platform Innovations
             </h2>
             <p className="text-xs text-gray-500 mt-1">
               Engineering breakthroughs delivering traceability, operational efficiency, and financial circularity.
@@ -445,11 +589,9 @@ export default function RootHomePage() {
             </span>
           </div>
           <div className="flex items-center gap-4 text-[11px] text-gray-500">
-            <span>SIH 2026 Problem ID: 26259</span>
-            <span>•</span>
             <span>Swachh Bharat Mission (Grameen)</span>
             <span>•</span>
-            <span className="text-emerald-700 font-semibold">Ready for Evaluation</span>
+            <span className="text-emerald-700 font-semibold">Active Value Chain</span>
           </div>
         </div>
       </footer>
