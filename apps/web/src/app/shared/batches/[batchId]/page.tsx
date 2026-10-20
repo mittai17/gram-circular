@@ -22,9 +22,12 @@ import {
 } from 'lucide-react';
 import { MOCK_BATCHES } from '@/lib/mock-data';
 
-export default function SharedDigitalPassportPage() {
-  const params = useParams();
-  const batchId = params?.batchId as string;
+export default function SharedDigitalPassportPage({
+  params,
+}: {
+  params: Promise<{ batchId: string }>;
+}) {
+  const { batchId } = React.use(params);
 
   const batch =
     MOCK_BATCHES.find((b) => b.batchNumber === batchId) || MOCK_BATCHES[0];

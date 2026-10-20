@@ -1,20 +1,22 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import { MOCK_BATCHES } from '@/lib/mock-data';
 
-export default function QRRedirectPage() {
-  const params = useParams();
-  const router = useRouter();
-  const token = params?.token as string;
+export default async function QRRedirectPage({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}) {
+  const { token } = await params;
 
-  React.useEffect(() => {
-    // Find matching batch by QR token or default to first batch
-    const match =
-      MOCK_BATCHES.find((b) => b.qrToken === token) || MOCK_BATCHES[0];
-    router.replace(`/shared/batches/${match.batchNumber}`);
-  }, [token, router]);
+  const match =
+    MOCK_BATCHES.find((b) => b.qrToken === token) || MOCK_BATCHES[0];
+
+  // Client-side redirect to the batch detail page
+  if (typeof window !== 'undefined') {
+    window.location.replace(`/shared/batches/${match.batchNumber}`);
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f8faf9] text-xs text-gray-500">
