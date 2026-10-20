@@ -129,7 +129,7 @@ export default function OSMWebViewCollectionPoints({
             {[-1, 0, 1].map((dx) => {
               const subdomains = ['a', 'b', 'c'];
               const sub = subdomains[Math.abs(dx + dy) % 3];
-              const tileUrl = `https://${sub}.basemaps.cartocdn.com/rastertiles/voyager/${centerTile.zoom}/${centerTile.x + dx}/${centerTile.y + dy}.png`;
+              const tileUrl = `https://${sub}.tile.openstreetmap.fr/osmfr/${centerTile.zoom}/${centerTile.x + dx}/${centerTile.y + dy}.png`;
 
               return (
                 <Image
@@ -137,7 +137,7 @@ export default function OSMWebViewCollectionPoints({
                   source={{
                     uri: tileUrl,
                     headers: {
-                      'User-Agent': 'GramCircular-Mobile/1.0',
+                      'User-Agent': 'GramCircular-Mobile/1.0 (contact@gramcircular.gov.in)',
                     },
                   }}
                   style={styles.tileImage}
