@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'GRAM-CIRCULAR | Rural Waste & MLP Traceability Platform',
+  title: 'ECOZA | Rural Waste & MLP Traceability Platform',
   description: 'End-to-End Multilayer Plastic (MLP) and Rural Waste Value Chain & Traceability System',
   icons: [
     { rel: 'icon', url: '/logo.png' },

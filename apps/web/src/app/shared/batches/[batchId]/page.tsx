@@ -85,13 +85,13 @@ export default function SharedDigitalPassportPage({
               src="/logo.png"
               width={36}
               height={36}
-              alt="GRAM-CIRCULAR"
+              alt="ECOZA"
               className="w-full h-full object-contain"
             />
           </div>
           <div>
             <h1 className="text-sm font-bold tracking-tight text-gray-900 uppercase">
-              GRAM-CIRCULAR
+              ECOZA
             </h1>
             <p className="text-[11px] text-emerald-800 font-semibold">
               Public Digital Waste Provenance Passport

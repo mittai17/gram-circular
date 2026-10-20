@@ -222,7 +222,7 @@ export default function RootHomePage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-lg text-[#0f3d24] tracking-tight uppercase">
-                  GRAM-CIRCULAR
+                  ECOZA
                 </span>
               </div>
               <p className="text-xs text-gray-500 font-medium">
@@ -254,7 +254,7 @@ export default function RootHomePage() {
                   src="/logo.png"
                   width={112}
                   height={112}
-                  alt="GRAM-CIRCULAR Official Emblem"
+                  alt="ECOZA Official Emblem"
                   className="w-24 h-24 sm:w-28 sm:h-28 object-contain hover:scale-105 transition-transform"
                   priority
                 />
@@ -608,11 +608,11 @@ export default function RootHomePage() {
               src="/logo.png"
               width={24}
               height={24}
-              alt="GRAM-CIRCULAR"
+              alt="ECOZA"
               className="w-6 h-6 object-contain"
             />
             <span>
-              <strong>GRAM-CIRCULAR</strong> — Rural Multilayer Plastic (MLP) Waste Value Chain
+              <strong>ECOZA</strong> — Rural Multilayer Plastic (MLP) Waste Value Chain
             </span>
           </div>
           <div className="flex items-center gap-4 text-[11px] text-gray-500">

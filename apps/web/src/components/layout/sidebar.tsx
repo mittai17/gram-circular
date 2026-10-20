@@ -58,11 +58,11 @@ export function Sidebar() {
     : { name: 'Panchayat Admin', roleTitle: 'Admin', online: true };
 
   const roleTitles: Record<string, { portal: string; subtitle: string }> = {
-    admin: { portal: 'GRAM-CIRCULAR', subtitle: 'Admin Panel' },
-    worker: { portal: 'GRAM-CIRCULAR', subtitle: 'Worker Portal' },
-    mrf: { portal: 'GRAM-CIRCULAR', subtitle: 'MRF Operator' },
+    admin: { portal: 'ECOZA', subtitle: 'Admin Panel' },
+    worker: { portal: 'ECOZA', subtitle: 'Worker Portal' },
+    mrf: { portal: 'ECOZA', subtitle: 'MRF Operator' },
     buyer: { portal: 'BUYER / PROCESSOR', subtitle: 'Buyer Portal' },
-    citizen: { portal: 'GRAM-CIRCULAR', subtitle: 'Citizen Portal' },
+    citizen: { portal: 'ECOZA', subtitle: 'Citizen Portal' },
   };
 
   const navConfig: Record<string, NavItem[]> = {
