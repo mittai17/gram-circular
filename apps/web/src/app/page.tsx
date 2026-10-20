@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useRoleStore, ROLE_LANDING_PAGES } from '@/stores/role-store';
 import { DemoRole } from '@/types';
@@ -209,8 +210,15 @@ export default function RootHomePage() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[#1a5c38] via-[#0f3d24] to-[#0a2e1b] flex items-center justify-center text-white shadow-md ring-2 ring-emerald-500/20">
-              <Leaf className="w-6 h-6 text-emerald-300" />
+            <div className="h-11 w-11 rounded-2xl bg-white flex items-center justify-center shadow-md ring-2 ring-emerald-500/20 overflow-hidden p-0.5">
+              <Image
+                src="/ecoza-logo.png"
+                alt="ecoza logo"
+                width={40}
+                height={40}
+                className="object-contain"
+                priority
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">

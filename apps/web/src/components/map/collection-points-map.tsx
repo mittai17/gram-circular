@@ -23,6 +23,84 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+// ------------------------------------------------------------------
+// Fetch real road geometry from OSRM public routing API
+// Calls the OSRM Demo Server with the driving profile.
+// Returns an array of [lat, lng] tuples representing the road path.
+// ------------------------------------------------------------------
+async function fetchOsrmRoute(
+  waypoints: [number, number][]
+): Promise<[number, number][]> {
+  if (waypoints.length < 2) return waypoints;
+
+  // OSRM expects coordinates as "lng,lat" pairs separated by semicolons
+  const coords = waypoints.map(([lat, lng]) => `${lng},${lat}`).join(';');
+  const url =
+    `https://router.project-osrm.org/route/v1/driving/${coords}` +
+    `?overview=full&geometries=geojson&steps=false`;
+
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error(`OSRM ${res.status}`);
+    const data = await res.json();
+    if (data.code !== 'Ok' || !data.routes?.length) throw new Error('No route');
+
+    // GeoJSON geometry coordinates are [lng, lat] — flip to [lat, lng] for Leaflet
+    const geoCoords: [number, number][] = data.routes[0].geometry.coordinates.map(
+      ([lng, lat]: [number, number]) => [lat, lng] as [number, number]
+    );
+    return geoCoords;
+  } catch (err) {
+    console.warn('OSRM route fetch failed, falling back to straight lines', err);
+    return waypoints; // straight-line fallback
+  }
+}
+
+// Draw arrowheads along a polyline to indicate travel direction
+function addArrowDecorations(
+  map: L.Map,
+  latlngs: [number, number][],
+  color: string
+): L.Marker[] {
+  const arrows: L.Marker[] = [];
+  const step = Math.max(1, Math.floor(latlngs.length / 5)); // ~5 arrows per route
+
+  for (let i = step; i < latlngs.length - 1; i += step) {
+    const [lat1, lng1] = latlngs[i - 1];
+    const [lat2, lng2] = latlngs[i];
+
+    // Calculate bearing angle for arrow rotation
+    const dLng = lng2 - lng1;
+    const dLat = lat2 - lat1;
+    const angleDeg = (Math.atan2(dLng, dLat) * 180) / Math.PI;
+
+    const arrowIcon = L.divIcon({
+      className: '',
+      html: `<div style="
+        width: 0; height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-bottom: 13px solid ${color};
+        transform: rotate(${angleDeg}deg);
+        opacity: 0.9;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+      "></div>`,
+      iconSize: [12, 13],
+      iconAnchor: [6, 6],
+    });
+
+    const arrowMarker = L.marker([lat2, lng2], {
+      icon: arrowIcon,
+      interactive: false,
+      zIndexOffset: -100,
+    }).addTo(map);
+
+    arrows.push(arrowMarker);
+  }
+
+  return arrows;
+}
+
 export default function CollectionPointsMap({
   points,
   selectedPointId,
@@ -35,81 +113,87 @@ export default function CollectionPointsMap({
   const mapContainerRef = React.useRef<HTMLDivElement>(null);
   const mapInstanceRef = React.useRef<L.Map | null>(null);
   const markersRef = React.useRef<L.Marker[]>([]);
-  const polylineRef = React.useRef<L.Polyline | null>(null);
-  const [activeTileLayer, setActiveTileLayer] = React.useState<'osm' | 'carto'>('osm');
+  const routeLayersRef = React.useRef<(L.Polyline | L.Marker)[]>([]);
+  const [routeLoading, setRouteLoading] = React.useState(false);
 
+  // ---------------------------------------------------------------
+  // Initialise map (run once)
+  // ---------------------------------------------------------------
   React.useEffect(() => {
-    if (!mapContainerRef.current) return;
+    if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-    if (!mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current, {
-        center,
-        zoom,
-        zoomControl: true,
-        attributionControl: true,
-      });
+    const map = L.map(mapContainerRef.current, {
+      center,
+      zoom,
+      zoomControl: true,
+      attributionControl: true,
+    });
 
-      // Standard Official OpenStreetMap Layer
-      const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
-        subdomains: ['a', 'b', 'c'],
-        maxZoom: 19,
-        crossOrigin: true,
-      });
+    // Standard OpenStreetMap layer
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+      subdomains: ['a', 'b', 'c'],
+      maxZoom: 19,
+      crossOrigin: true,
+    });
 
-      // Fallback CartoDB Voyager Layer
-      const cartoLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
+    // Fallback CartoDB Voyager
+    const cartoLayer = L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+      {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         subdomains: 'abcd',
         maxZoom: 19,
         crossOrigin: true,
-      });
+      }
+    );
 
-      // Add default tile layer
-      osmLayer.addTo(map);
+    osmLayer.addTo(map);
+    osmLayer.on('tileerror', () => {
+      if (!map.hasLayer(cartoLayer)) cartoLayer.addTo(map);
+    });
 
-      // Add layer error fallback
-      osmLayer.on('tileerror', () => {
-        console.warn('OpenStreetMap tile error, falling back to Carto Voyager');
-        if (!map.hasLayer(cartoLayer)) {
-          cartoLayer.addTo(map);
-        }
-      });
+    mapInstanceRef.current = map;
 
-      mapInstanceRef.current = map;
+    setTimeout(() => map.invalidateSize(), 100);
+    setTimeout(() => map.invalidateSize(), 300);
+    setTimeout(() => map.invalidateSize(), 800);
 
-      // Invalidate size across multiple render frames to guarantee tiles populate
-      setTimeout(() => map.invalidateSize(), 100);
-      setTimeout(() => map.invalidateSize(), 300);
-      setTimeout(() => map.invalidateSize(), 800);
+    const onResize = () => map.invalidateSize();
+    window.addEventListener('resize', onResize);
 
-      const handleResize = () => map.invalidateSize();
-      window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      return () => {
-        window.removeEventListener('resize', handleResize);
-      };
-    }
-
+  // ---------------------------------------------------------------
+  // Update markers & route when `points` / `showRoute` change
+  // ---------------------------------------------------------------
+  React.useEffect(() => {
     const map = mapInstanceRef.current;
-    if (map) {
-      map.invalidateSize();
-    }
+    if (!map) return;
+
+    map.invalidateSize();
 
     // Clear old markers
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
-    if (polylineRef.current) {
-      polylineRef.current.remove();
-      polylineRef.current = null;
-    }
 
-    const routeCoords: [number, number][] = [];
+    // Clear old route layers (polylines + arrow markers)
+    routeLayersRef.current.forEach((l) => l.remove());
+    routeLayersRef.current = [];
 
-    // Add markers for points
-    points.forEach((point) => {
+    const routeWaypoints: [number, number][] = [];
+
+    // ---- Add numbered stop markers ----
+    points.forEach((point, idx) => {
       const isSelected = point.id === selectedPointId;
-      routeCoords.push([point.lat, point.lng]);
+      routeWaypoints.push([point.lat, point.lng]);
 
       const getBgColor = () => {
         if (point.status === 'Maintenance') return '#64748b';
@@ -118,47 +202,48 @@ export default function CollectionPointsMap({
         return '#1a5c38';
       };
 
+      const bg = getBgColor();
+      const size = isSelected ? 40 : 32;
+
       const customIcon = L.divIcon({
         className: 'custom-map-marker',
         html: `
           <div style="
-            background-color: ${getBgColor()};
+            background-color: ${bg};
             color: white;
-            width: ${isSelected ? '36px' : '30px'};
-            height: ${isSelected ? '36px' : '30px'};
+            width: ${size}px;
+            height: ${size}px;
             border-radius: 9999px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
-            font-weight: 700;
+            font-size: ${isSelected ? 13 : 11}px;
+            font-weight: 800;
             border: ${isSelected ? '3px solid #ffffff' : '2px solid #ffffff'};
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
             cursor: pointer;
-            transition: transform 0.2s ease;
+            position: relative;
           ">
-            ${point.code.replace('CP-', '')}
+            ${idx + 1}
           </div>
         `,
-        iconSize: [isSelected ? 36 : 30, isSelected ? 36 : 30],
-        iconAnchor: [isSelected ? 18 : 15, isSelected ? 18 : 15],
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
       });
 
       const marker = L.marker([point.lat, point.lng], { icon: customIcon }).addTo(map);
 
-      marker.on('click', () => {
-        onSelectPoint?.(point);
-      });
+      marker.on('click', () => onSelectPoint?.(point));
 
       marker.bindPopup(`
-        <div style="font-family: sans-serif; font-size: 12px; padding: 4px; min-width: 140px;">
-          <strong style="color: #0f3d24; font-size: 13px;">${point.code} - ${point.name}</strong><br/>
+        <div style="font-family: sans-serif; font-size: 12px; padding: 4px; min-width: 160px;">
+          <strong style="color: #0f3d24; font-size: 13px;">${point.code} – ${point.name}</strong><br/>
           <span style="color: #666;">Village: ${point.village}</span><br/>
-          <div style="margin-top: 4px; display: flex; justify-content: space-between;">
-            <span>Fill: <b>${point.fillLevel}%</b></span>
+          <div style="margin-top: 6px; background:#f1f5f9; border-radius:6px; padding:4px 6px;">
+            <span>Fill: <b>${point.fillLevel}%</b></span> &nbsp;|&nbsp;
             <span>Total: <b>${point.weight} kg</b></span>
           </div>
-          <div style="margin-top: 2px; color: #1a5c38; font-weight: 600;">
+          <div style="margin-top: 4px; color: #1a5c38; font-weight: 600;">
             MLP: ${point.mlpWeight} kg
           </div>
         </div>
@@ -167,35 +252,53 @@ export default function CollectionPointsMap({
       markersRef.current.push(marker);
     });
 
-    // Draw route if requested
-    if (showRoute && routeCoords.length > 1) {
-      polylineRef.current = L.polyline(routeCoords, {
-        color: '#1a5c38',
-        weight: 3.5,
-        opacity: 0.8,
-        dashArray: '6, 8',
-      }).addTo(map);
+    // ---- Draw real-road route ----
+    if (showRoute && routeWaypoints.length > 1) {
+      const routeColor = '#1a5c38';
+      const outlineColor = '#ffffff';
+
+      setRouteLoading(true);
+
+      fetchOsrmRoute(routeWaypoints).then((roadCoords) => {
+        const map = mapInstanceRef.current;
+        if (!map) return;
+
+        // White outline/shadow polyline underneath for contrast
+        const outlineLine = L.polyline(roadCoords, {
+          color: outlineColor,
+          weight: 9,
+          opacity: 0.6,
+          lineCap: 'round',
+          lineJoin: 'round',
+        }).addTo(map);
+
+        // Main green route polyline on top
+        const routeLine = L.polyline(roadCoords, {
+          color: routeColor,
+          weight: 6,
+          opacity: 0.95,
+          lineCap: 'round',
+          lineJoin: 'round',
+        }).addTo(map);
+
+        routeLayersRef.current.push(outlineLine, routeLine);
+
+        // Draw directional arrows along the route
+        const arrows = addArrowDecorations(map, roadCoords, routeColor);
+        routeLayersRef.current.push(...arrows);
+
+        setRouteLoading(false);
+      });
     }
 
-    // Auto-focus selected point if present
+    // Auto-focus selected point
     if (selectedPointId) {
-      const selected = points.find((p) => p.id === selectedPointId);
-      if (selected) {
-        map.setView([selected.lat, selected.lng], Math.max(map.getZoom(), 14), {
-          animate: true,
-        });
+      const sel = points.find((p) => p.id === selectedPointId);
+      if (sel) {
+        map.setView([sel.lat, sel.lng], Math.max(map.getZoom(), 14), { animate: true });
       }
     }
-  }, [points, selectedPointId, onSelectPoint, showRoute, center, zoom]);
-
-  React.useEffect(() => {
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, []);
+  }, [points, selectedPointId, onSelectPoint, showRoute]);
 
   return (
     <div className="relative w-full h-full min-h-[500px]">
@@ -204,6 +307,31 @@ export default function CollectionPointsMap({
         className={className}
         style={{ minHeight: '500px', height: '100%', width: '100%', zIndex: 1 }}
       />
+      {/* Loading indicator while OSRM route is being fetched */}
+      {routeLoading && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 16,
+            right: 16,
+            zIndex: 1000,
+            background: 'rgba(255,255,255,0.95)',
+            borderRadius: 10,
+            padding: '6px 14px',
+            fontSize: 12,
+            fontWeight: 600,
+            color: '#1a5c38',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+            border: '1px solid #d1fae5',
+          }}
+        >
+          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#1a5c38', animation: 'pulse 1s infinite' }} />
+          Computing road route…
+        </div>
+      )}
     </div>
   );
 }
