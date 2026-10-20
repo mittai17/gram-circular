@@ -5,6 +5,7 @@ import { HeaderBar } from '../../components/common/HeaderBar';
 import { OfflineBanner } from '../../components/common/OfflineBanner';
 import { BottomNav } from '../../components/common/BottomNav';
 import { Card, Button, StatusBadge, SectionHeader, EmptyState } from '../../components/ui';
+import OSMWebViewMap, { RouteStop as MapRouteStop } from '../../components/map/OSMWebViewMap';
 import { WORKER_ROUTE } from '../../lib/mock-data';
 import { colors } from '../../theme/colors';
 import { RouteStop, VehicleRoute } from '../../types';
@@ -17,6 +18,21 @@ import {
   TrendingUp,
   ChevronRight,
 } from 'lucide-react-native';
+
+// ---------------------------------------------------------------------------
+// Demo data — Tirunelveli / Kovilpatti region, Tamil Nadu
+// ---------------------------------------------------------------------------
+const DEMO_DEPOT = { lat: 9.1726, lng: 77.6050 }; // MRF / Depot
+
+const DEMO_MAP_STOPS: MapRouteStop[] = [
+  { id: 'cp1', name: 'Shanti Nagar CP-01', coordinate: { lat: 9.1850, lng: 77.5980 }, status: 'COMPLETED', sequence: 1, fillPercent: 20 },
+  { id: 'cp2', name: 'Gandhi St CP-02',    coordinate: { lat: 9.1780, lng: 77.6120 }, status: 'COMPLETED', sequence: 2, fillPercent: 45 },
+  { id: 'cp3', name: 'Kovilpattu CP-03',   coordinate: { lat: 9.1650, lng: 77.6180 }, status: 'CURRENT',   sequence: 3, fillPercent: 72 },
+  { id: 'cp4', name: 'Murugan Nagar CP-04',coordinate: { lat: 9.1580, lng: 77.6050 }, status: 'PENDING',   sequence: 4, fillPercent: 88 },
+  { id: 'cp5', name: 'Anna Colony CP-05',  coordinate: { lat: 9.1620, lng: 77.5920 }, status: 'PENDING',   sequence: 5, fillPercent: 60 },
+  { id: 'cp6', name: 'Perumalpuram CP-06', coordinate: { lat: 9.1700, lng: 77.5850 }, status: 'PENDING',   sequence: 6, fillPercent: 95 },
+];
+
 
 type VehicleStatus = 'Active' | 'Idle' | 'Maintenance';
 
@@ -166,6 +182,30 @@ export default function AdminRoutesScreen() {
           subtitle={`Driver: ${selectedVehicle.driverName} • ${completionPct}% complete`}
         />
 
+        {/* OSM + OSRM Route Map */}
+        <View style={styles.mapContainer}>
+          <OSMWebViewMap
+            stops={DEMO_MAP_STOPS}
+            depot={DEMO_DEPOT}
+            showRouting
+            height={280}
+          />
+          {/* Route legend */}
+          <View style={styles.mapLegend}>
+            {[
+              { color: '#22c55e', label: 'Completed' },
+              { color: '#1a5c38', label: 'Current' },
+              { color: '#f97316', label: 'Pending' },
+              { color: '#9ca3af', label: 'Skipped' },
+            ].map(({ color, label }) => (
+              <View key={label} style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: color }]} />
+                <Text style={styles.legendText}>{label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
         <Card padding={14} shadow="md">
           <View style={styles.routeProgressContainer}>
             <View style={styles.progressLabelRow}>
@@ -210,7 +250,7 @@ export default function AdminRoutesScreen() {
                 <TouchableOpacity
                   key={stop.id}
                   style={styles.stopRow}
-                  onPress={() => router.push(`/(admin)/routes/${stop.id}`)}
+                  onPress={() => router.push(`/(admin)/routes/${stop.id}` as any)}
                   activeOpacity={0.8}
                 >
                   <View style={styles.stopIndexBadge}>
@@ -282,6 +322,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: '60%',
   },
+  mapContainer: {
+    marginBottom: 14,
+  },
+  mapLegend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendText: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '500' as const,
+  },
+
   vehicleRow: {
     marginBottom: 10,
   },

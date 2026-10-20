@@ -9,6 +9,7 @@ import { StatusBadge } from '../../components/ui/StatusBadge';
 import { SectionHeader } from '../../components/ui/SectionHeader';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import CollectionPointMap from '../../components/map/OSMWebViewCollectionPoints';
 import { db } from '../../lib/db';
 import { colors } from '../../theme/colors';
 import {
@@ -22,6 +23,18 @@ import {
   Layers,
   ShieldAlert,
 } from 'lucide-react-native';
+
+// CP-03 Gandhi Street — demo coordinates for the map thumbnail
+const CURRENT_STOP_POINT = [{
+  id: 'cp3',
+  name: 'CP-03 Gandhi Street',
+  lat: 9.1650,
+  lng: 77.6180,
+  fillPercent: 72,
+  wasteStreams: ['Wet', 'MLP'],
+  isActive: true,
+}];
+
 
 const BIN_TYPES = [
   { id: 'wet', name: 'Wet Waste', color: '#10b981', light: '#ecfdf5', icon: Leaf, desc: 'Kitchen & organic waste' },
@@ -145,6 +158,11 @@ export default function WorkerStopDetailScreen() {
           <Text style={styles.nextStopText}>
             Next Stop: CP-07 School Road (2.1 km away)
           </Text>
+        </View>
+
+        {/* Collection point location thumbnail */}
+        <View style={styles.mapThumbnail}>
+          <CollectionPointMap points={CURRENT_STOP_POINT} height={160} />
         </View>
       </Card>
 
@@ -356,6 +374,12 @@ const styles = StyleSheet.create({
     color: '#166534',
     fontWeight: '600',
   },
+  mapThumbnail: {
+    marginTop: 12,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+
   binsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

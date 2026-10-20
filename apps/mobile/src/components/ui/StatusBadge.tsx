@@ -8,6 +8,7 @@ type BadgeVariant =
   | 'success'
   | 'warning'
   | 'error'
+  | 'danger'
   | 'info'
   | 'primary'
   | 'mlp'
@@ -20,6 +21,7 @@ const VARIANT_STYLES: Record<BadgeVariant, { bg: string; color: string }> = {
   success: { bg: '#ecfdf5', color: '#15803d' },
   warning: { bg: '#fef3c7', color: '#b45309' },
   error: { bg: '#fef2f2', color: '#b91c1c' },
+  danger: { bg: '#fef2f2', color: '#b91c1c' },
   info: { bg: '#eff6ff', color: '#1d4ed8' },
   primary: { bg: '#e8f5e9', color: '#1a5c38' },
   mlp: { bg: '#e8f5e9', color: '#1a5c38' },
@@ -35,23 +37,25 @@ interface StatusBadgeProps {
   small?: boolean;
 }
 
+const DEFAULT_THEME = { bg: '#f1f5f9', color: '#475569' };
+
 export function StatusBadge({
   children,
   variant = 'default',
   style,
   small = false,
 }: StatusBadgeProps) {
-  const theme = VARIANT_STYLES[variant];
+  const theme = (variant && (VARIANT_STYLES as Record<string, { bg: string; color: string }>)[variant]) || DEFAULT_THEME;
 
   return (
     <View
       style={[
         styles.base,
-        { backgroundColor: theme.bg },
+        { backgroundColor: theme?.bg ?? '#f1f5f9' },
         small && styles.small,
       ]}
     >
-      <Text style={[styles.text, { color: theme.color }, style]}>{children}</Text>
+      <Text style={[styles.text, { color: theme?.color ?? '#475569' }, style]}>{children}</Text>
     </View>
   );
 }

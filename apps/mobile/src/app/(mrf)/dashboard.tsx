@@ -15,6 +15,7 @@ import {
   Send,
   ChevronRight,
   Layers,
+  Factory,
 } from 'lucide-react-native';
 
 const mrf = colors.roles.mrf; // primary: #ea580c, light: #fff7ed
@@ -33,7 +34,7 @@ export default function MrfDashboard() {
   const totalCapacityKg = 1000;
   const capacityPercent = Math.round((totalStockKg / totalCapacityKg) * 100);
 
-  const handleStatPress = (route: string) => () => router.push(`/(mrf)${route}`);
+  const handleStatPress = (route: string) => () => router.push(`/(mrf)${route}` as any);
 
   return (
     <Screen title="Welcome, Selvam!" subtitle="Tidel MRF Processing Facility">
@@ -138,6 +139,14 @@ export default function MrfDashboard() {
       <SectionHeader title="Operations" />
       <View style={styles.shortcuts}>
         {[
+          {
+            title: 'MLP Upcycling Engine',
+            desc: 'Launch production run • IS 15658 / IRC:SP:98',
+            icon: <Factory size={20} color="#ea580c" />,
+            iconBg: mrf.light,
+            color: mrf.primary,
+            onPress: () => router.push('/(mrf)/manufacturing'),
+          },
           {
             title: 'Quality Inspection',
             desc: 'Inspect MLP-2026-0143 • 12.8 kg',

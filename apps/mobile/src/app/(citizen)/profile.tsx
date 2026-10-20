@@ -112,7 +112,7 @@ export default function CitizenProfileScreen() {
               style={[styles.menuItem, !isLast && styles.menuItemBorder]}
               onPress={() => {
                 if (item.route) {
-                  router.push(item.route);
+                  router.push(item.route as any);
                 } else if (item.id === 'help') {
                   Alert.alert('Gram Panchayat Helpline', '+91 94420 54321 • admin@panchayat.gov.in');
                 } else {

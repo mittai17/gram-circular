@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -14,7 +15,6 @@ import {
   MapPin,
   Scale,
   Truck,
-  Leaf,
   Printer,
   Share2,
   Building2,
@@ -80,8 +80,14 @@ export default function SharedDigitalPassportPage({
       {/* Top Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4caf50] to-[#1a5c38] flex items-center justify-center text-white">
-            <Leaf className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-0.5 shadow-md border border-emerald-100 shrink-0">
+            <Image
+              src="/logo.png"
+              width={36}
+              height={36}
+              alt="GRAM-CIRCULAR"
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
             <h1 className="text-sm font-bold tracking-tight text-gray-900 uppercase">

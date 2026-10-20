@@ -2,11 +2,11 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useRoleStore } from '@/stores/role-store';
 import { cn } from '@/lib/utils';
 import {
-  Leaf,
   LayoutDashboard,
   MapPin,
   Home,
@@ -118,8 +118,15 @@ export function Sidebar() {
       {/* Brand Header */}
       <div className="p-4 sm:p-5 flex items-center justify-between border-b border-emerald-950/60 bg-[#0a2e1b]/40">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#4caf50] to-[#1a5c38] flex items-center justify-center shadow-lg text-white group-hover:scale-105 transition-transform">
-            <Leaf className="w-6 h-6 text-emerald-100" />
+          <div className="h-11 w-11 rounded-xl bg-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform overflow-hidden p-1 shrink-0 ring-1 ring-white/20">
+            <Image
+              src="/logo.png"
+              width={44}
+              height={44}
+              alt="GRAM-CIRCULAR"
+              className="w-full h-full object-contain"
+              priority
+            />
           </div>
           <div>
             <h1 className="text-sm font-bold tracking-tight text-white uppercase group-hover:text-emerald-200 transition-colors">

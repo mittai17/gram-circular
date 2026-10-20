@@ -7,6 +7,7 @@ import { StatCard } from '../../components/ui/StatCard';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { SectionHeader } from '../../components/ui/SectionHeader';
 import { Button } from '../../components/ui/Button';
+import CollectionPointMap, { CollectionPoint } from '../../components/map/OSMWebViewCollectionPoints';
 import { WORKER_ROUTE } from '../../lib/mock-data';
 import { colors } from '../../theme/colors';
 import {
@@ -20,6 +21,19 @@ import {
   Activity,
   Target,
 } from 'lucide-react-native';
+
+// ---------------------------------------------------------------------------
+// Demo collection points — Tirunelveli / Kovilpatti region, Tamil Nadu
+// ---------------------------------------------------------------------------
+const TODAY_STOPS: CollectionPoint[] = [
+  { id: 'cp1', name: 'Shanti Nagar CP-01', lat: 9.1850, lng: 77.5980, fillPercent: 20, wasteStreams: ['Wet', 'Dry'], isActive: true },
+  { id: 'cp2', name: 'Gandhi St CP-02',    lat: 9.1780, lng: 77.6120, fillPercent: 45, wasteStreams: ['MLP', 'Dry'], isActive: true },
+  { id: 'cp3', name: 'Kovilpattu CP-03',   lat: 9.1650, lng: 77.6180, fillPercent: 72, wasteStreams: ['Wet', 'MLP'], isActive: true },
+  { id: 'cp4', name: 'Murugan Nagar CP-04',lat: 9.1580, lng: 77.6050, fillPercent: 88, wasteStreams: ['Dry'],       isActive: true },
+  { id: 'cp5', name: 'Anna Colony CP-05',  lat: 9.1620, lng: 77.5920, fillPercent: 60, wasteStreams: ['MLP'],       isActive: true },
+  { id: 'cp6', name: 'Perumalpuram CP-06', lat: 9.1700, lng: 77.5850, fillPercent: 95, wasteStreams: ['Wet', 'Dry', 'MLP'], isActive: true },
+];
+
 
 export default function WorkerDashboard() {
   const router = useRouter();
@@ -123,13 +137,19 @@ export default function WorkerDashboard() {
           <Text style={styles.progressText}>{progressPercent}% Complete</Text>
         </View>
 
+        {/* Live collection point map */}
+        <View style={styles.mapWrapper}>
+          <CollectionPointMap points={TODAY_STOPS} height={220} />
+        </View>
+
         <Button
           title={`Continue Route • Stop ${completedStops + 1}`}
           leftIcon={<Play size={16} color="#ffffff" />}
           fullWidth
-          onPress={() => router.push('/(worker)/stop-detail')}
+          onPress={() => router.push('/(worker)/route' as any)}
         />
       </Card>
+
 
       {/* Quick Actions */}
       <SectionHeader
@@ -261,6 +281,13 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     textAlign: 'right',
   },
+  mapWrapper: {
+    marginTop: 12,
+    marginBottom: 12,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+
   actionsRow: {
     flexDirection: 'row',
     gap: 10,

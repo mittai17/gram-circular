@@ -21,6 +21,11 @@ import {
   BookOpen,
   Calendar,
   AlertTriangle,
+  Factory,
+  TrendingUp,
+  Leaf,
+  Upload,
+  ShoppingCart,
 } from 'lucide-react-native';
 
 interface NavItem {
@@ -33,8 +38,8 @@ interface NavItem {
 const NAV_CONFIG: Record<string, NavItem[]> = {
   admin: [
     { key: 'home', label: 'Home', route: '/(admin)/dashboard', icon: Home },
-    { key: 'villages', label: 'Villages', route: '/(admin)/villages', icon: MapPin },
-    { key: 'routes', label: 'Routes', route: '/(admin)/routes', icon: Navigation },
+    { key: 'routing', label: 'Routing', route: '/(admin)/dynamic-routing', icon: Navigation },
+    { key: 'ledger', label: 'Ledger', route: '/(admin)/sustainability', icon: Leaf },
     { key: 'reports', label: 'Reports', route: '/(admin)/reports', icon: FileText },
     { key: 'users', label: 'Users', route: '/(admin)/users', icon: UsersIcon },
   ],
@@ -43,21 +48,21 @@ const NAV_CONFIG: Record<string, NavItem[]> = {
     { key: 'route', label: 'Route', route: '/(worker)/stop-detail', icon: Navigation },
     { key: 'weigh', label: 'Weigh', route: '/(worker)/weighing', icon: PlusCircle },
     { key: 'collections', label: 'My Bags', route: '/(worker)/my-collections', icon: Layers },
-    { key: 'sync', label: 'Sync', route: '/(worker)/offline-mode', icon: RefreshCw },
+    { key: 'sync', label: 'Edge Sync', route: '/(worker)/edge-sync', icon: Upload },
   ],
   mrf: [
     { key: 'home', label: 'Home', route: '/(mrf)/dashboard', icon: Home },
-    { key: 'batches', label: 'Batches', route: '/(mrf)/batches', icon: Layers },
+    { key: 'manufacturing', label: 'MLP Upcycle', route: '/(mrf)/manufacturing', icon: Factory },
     { key: 'storage', label: 'Storage', route: '/(mrf)/storage', icon: Archive },
     { key: 'inventory', label: 'Inventory', route: '/(mrf)/inventory', icon: BarChart2 },
     { key: 'dispatch', label: 'Dispatch', route: '/(mrf)/dispatch', icon: Send },
   ],
   buyer: [
     { key: 'home', label: 'Home', route: '/(buyer)/dashboard', icon: Home },
+    { key: 'marketplace', label: 'Marketplace', route: '/(buyer)/marketplace', icon: ShoppingCart },
     { key: 'batches', label: 'Available', route: '/(buyer)/available-batches', icon: ShoppingBag },
     { key: 'receipt', label: 'Receipt', route: '/(buyer)/receipt-confirm', icon: FileText },
     { key: 'history', label: 'History', route: '/(buyer)/history', icon: Clock },
-    { key: 'analytics', label: 'Procure', route: '/(buyer)/procurement-chart', icon: BarChart2 },
   ],
   citizen: [
     { key: 'home', label: 'Home', route: '/(citizen)/home', icon: Home },

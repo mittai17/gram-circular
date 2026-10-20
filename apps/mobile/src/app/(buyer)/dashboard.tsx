@@ -114,7 +114,7 @@ export default function BuyerDashboard() {
               <TouchableOpacity
                 key={kpi.label}
                 style={styles.statWrap}
-                onPress={() => router.push(kpi.route)}
+                onPress={() => router.push(kpi.route as any)}
                 activeOpacity={0.8}
               >
                 <StatCard

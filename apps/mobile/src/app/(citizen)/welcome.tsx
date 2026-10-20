@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../../components/ui/Screen';
 import { Card } from '../../components/ui/Card';
@@ -51,12 +51,16 @@ export default function CitizenWelcomeScreen() {
       {/* Hero Card */}
       <Card padding={20} style={styles.heroCard}>
         <View style={styles.logoRow}>
-          <View style={styles.logoCircle}>
-            <Leaf size={30} color="#ffffff" />
+          <View style={styles.logoBadge}>
+            <Image
+              source={require('../../../assets/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
           <View style={styles.brandMeta}>
             <Text style={styles.brandTitle}>GRAM-CIRCULAR</Text>
-            <Text style={styles.brandSub}>Swachh Village Initiative</Text>
+            <Text style={styles.brandSub}>Swachh Village Initiative • Clean India</Text>
           </View>
         </View>
         <Text style={styles.welcomeTitle}>Welcome, Citizen!</Text>
@@ -128,13 +132,25 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 14,
   },
-  logoCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: CITIZEN_PRIMARY,
+  logoBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 3,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  logoImage: {
+    width: 56,
+    height: 56,
   },
   brandMeta: {},
   brandTitle: {

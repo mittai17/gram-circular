@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,12 @@ import {
   StyleSheet,
   ViewStyle,
   TextStyle,
+  TextInputProps,
 } from 'react-native';
 import { colors } from '../../theme/colors';
 import { borderRadius } from '../../theme/spacing';
 
-interface InputProps {
+export interface InputProps extends Omit<TextInputProps, 'style'> {
   value?: string;
   onChangeText?: (text: string) => void;
   placeholder?: string;
@@ -20,29 +21,34 @@ interface InputProps {
   keyboardType?: 'numeric' | 'email-address' | 'phone-pad' | 'default';
   editable?: boolean;
   leftIcon?: React.ReactNode;
-  style?: ViewStyle;
+  style?: TextStyle;
   containerStyle?: ViewStyle;
 }
 
-export function Input({
-  value,
-  onChangeText,
-  placeholder,
-  label,
-  error,
-  secureTextEntry = false,
-  keyboardType,
-  editable = true,
-  leftIcon,
-  style,
-  containerStyle,
-}: InputProps) {
+export const Input = forwardRef<TextInput, InputProps>(function Input(
+  {
+    value,
+    onChangeText,
+    placeholder,
+    label,
+    error,
+    secureTextEntry = false,
+    keyboardType,
+    editable = true,
+    leftIcon,
+    style,
+    containerStyle,
+    ...rest
+  },
+  ref
+) {
   return (
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={styles.label}>{label}</Text>}
       <View style={styles.inputWrapper}>
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
         <TextInput
+          ref={ref}
           style={[
             styles.input,
             leftIcon ? styles.inputWithIcon : undefined,
@@ -55,12 +61,13 @@ export function Input({
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
           editable={editable}
+          {...rest}
         />
       </View>
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -99,9 +106,8 @@ const styles = StyleSheet.create({
     borderColor: '#ef4444',
   },
   errorText: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#ef4444',
-    fontWeight: '600',
     marginTop: 4,
   },
 });
