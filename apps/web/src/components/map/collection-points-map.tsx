@@ -35,8 +35,9 @@ async function fetchOsrmRoute(
 
   // OSRM expects coordinates as "lng,lat" pairs separated by semicolons
   const coords = waypoints.map(([lat, lng]) => `${lng},${lat}`).join(';');
+  const baseUrl = process.env.NEXT_PUBLIC_OSRM_ROUTING_URL || 'https://router.project-osrm.org';
   const url =
-    `https://router.project-osrm.org/route/v1/driving/${coords}` +
+    `${baseUrl}/route/v1/driving/${coords}` +
     `?overview=full&geometries=geojson&steps=false`;
 
   try {
@@ -129,8 +130,11 @@ export default function CollectionPointsMap({
       attributionControl: true,
     });
 
-    // Standard OpenStreetMap layer
-    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Standard OpenStreetMap layer (or custom tile server)
+    const tileUrl =
+      process.env.NEXT_PUBLIC_OSM_TILE_URL ||
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const osmLayer = L.tileLayer(tileUrl, {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
       subdomains: ['a', 'b', 'c'],
