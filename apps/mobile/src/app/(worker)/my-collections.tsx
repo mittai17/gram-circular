@@ -1,15 +1,12 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
-import { HeaderBar } from '../../components/common/HeaderBar';
-import { BottomNav } from '../../components/common/BottomNav';
+import { Screen } from '../../components/ui/Screen';
+import { Card } from '../../components/ui/Card';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { WORKER_COLLECTIONS } from '../../lib/mock-data';
 import { colors } from '../../theme/colors';
 import {
@@ -20,130 +17,191 @@ import {
   MapPin,
   ChevronRight,
   Plus,
+  Search,
+  Filter,
 } from 'lucide-react-native';
+
+type TabKey = 'all' | 'today' | 'this-week' | 'this-month';
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'today', label: 'Today' },
+  { key: 'this-week', label: 'This Week' },
+  { key: 'this-month', label: 'This Month' },
+];
+
+const SYNC_BADGE_VARIANT: Record<string, 'success' | 'default' | 'info'> = {
+  SYNCED: 'success',
+  PENDING: 'default',
+  SYNCING: 'info',
+  FAILED: 'default',
+};
 
 export default function WorkerMyCollectionsScreen() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<TabKey>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const totalKg = WORKER_COLLECTIONS.reduce((acc, c) => acc + c.weightKg, 0);
+  const filtered = WORKER_COLLECTIONS.filter((item) => {
+    const matchesSearch =
+      item.batchNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.collectionPointName.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const now = new Date();
+    const created = new Date(item.createdAt);
+    let matchesTab = true;
+
+    if (activeTab === 'today') {
+      matchesTab =
+        created.toDateString() === now.toDateString();
+    } else if (activeTab === 'this-week') {
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      matchesTab = created >= weekAgo;
+    } else if (activeTab === 'this-month') {
+      matchesTab = created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+    }
+
+    return matchesSearch && matchesTab;
+  });
+
+  const totalKg = filtered.reduce((acc, c) => acc + c.weightKg, 0);
+
+  const renderItem = ({ item }: { item: (typeof WORKER_COLLECTIONS)[number] }) => {
+    const isSynced = item.syncStatus === 'SYNCED';
+    return (
+      <Card style={styles.itemCard} padding={14}>
+        <TouchableOpacity
+          onPress={() => router.push('/(worker)/qr-preview')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.itemRow}>
+            <View style={[styles.bagIcon, { backgroundColor: isSynced ? '#e8f5e9' : '#fff7ed' }]}>
+              <Layers size={20} color={isSynced ? '#1a5c38' : '#ea580c'} />
+            </View>
+            <View style={styles.itemMeta}>
+              <Text style={styles.itemBatch}>{item.batchNumber}</Text>
+              <Text style={styles.itemPoint}>{item.collectionPointName}</Text>
+              <Text style={styles.itemTime}>
+                {new Date(item.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                {', '}
+                {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            </View>
+            <View style={styles.itemRight}>
+              <Text style={styles.itemKg}>{item.weightKg.toFixed(1)} kg</Text>
+              <StatusBadge
+                variant={SYNC_BADGE_VARIANT[item.syncStatus] as any}
+                small
+                style={styles.statusChip}
+              >
+                {item.syncStatus}
+              </StatusBadge>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Card>
+    );
+  };
+
+  const renderSeparator = () => <View style={styles.separator} />;
 
   return (
-    <View style={styles.screen}>
-      <HeaderBar
-        title="My Collections"
-        subtitle={`Today • ${WORKER_COLLECTIONS.length} Records`}
-        showBack
-        rightAction={
-          <TouchableOpacity
-            style={styles.addBtn}
-            onPress={() => router.push('/(worker)/weighing')}
-          >
-            <Plus size={18} color="#ffffff" />
-          </TouchableOpacity>
-        }
+    <Screen
+      title="My Collections"
+      subtitle={`Today • ${WORKER_COLLECTIONS.length} Records`}
+      showBack
+      showOfflineBanner
+      showBottomNav
+    >
+      {/* Search Bar */}
+      <Input
+        placeholder="Search batch ID or location..."
+        leftIcon={<Search size={18} color={colors.textMuted} />}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        containerStyle={styles.searchContainer}
       />
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Total Summary Banner */}
-        <View style={styles.summaryCard}>
-          <View>
-            <Text style={styles.summaryTitle}>Today's Total MLP Weight</Text>
-            <Text style={styles.summaryKg}>{totalKg.toFixed(1)} kg</Text>
+      {/* Total Summary Banner */}
+      <Card style={styles.summaryCard} padding={16}>
+        <View style={styles.summaryLeft}>
+          <Text style={styles.summaryTitle}>Total Collected Weight</Text>
+          <Text style={styles.summaryKg}>{totalKg.toFixed(1)} kg</Text>
+        </View>
+        <View style={styles.summaryRight}>
+          <View style={[styles.statPill, { backgroundColor: '#ecfdf5' }]}>
+            <Text style={styles.statPillText}>
+              {WORKER_COLLECTIONS.filter((c) => c.syncStatus === 'SYNCED').length} Synced
+            </Text>
           </View>
-          <View style={styles.summaryRight}>
-            <View style={styles.statPill}>
-              <Text style={styles.statPillText}>
-                {WORKER_COLLECTIONS.filter((c) => c.syncStatus === 'SYNCED').length} Synced
-              </Text>
-            </View>
-            <View style={[styles.statPill, styles.statPillPending]}>
-              <Text style={[styles.statPillText, { color: '#c2410c' }]}>
-                {WORKER_COLLECTIONS.filter((c) => c.syncStatus === 'PENDING').length} In Queue
-              </Text>
-            </View>
+          <View style={[styles.statPill, { backgroundColor: '#fff7ed' }]}>
+            <Text style={[styles.statPillText, { color: '#c2410c' }]}>
+              {WORKER_COLLECTIONS.filter((c) => c.syncStatus === 'PENDING').length} In Queue
+            </Text>
           </View>
         </View>
+      </Card>
 
-        {/* Collections List */}
-        <Text style={styles.sectionHeader}>Collected Bags ({WORKER_COLLECTIONS.length})</Text>
-
-        {WORKER_COLLECTIONS.map((item) => {
-          const isSynced = item.syncStatus === 'SYNCED';
-
+      {/* Tab Filter */}
+      <View style={styles.tabsContainer}>
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.key;
           return (
             <TouchableOpacity
-              key={item.id}
-              style={styles.itemCard}
-              onPress={() => router.push('/(worker)/qr-preview')}
+              key={tab.key}
+              style={[styles.tabItem, isActive && styles.tabActive]}
+              onPress={() => setActiveTab(tab.key)}
               activeOpacity={0.8}
             >
-              <View style={styles.itemLeft}>
-                <View style={[styles.bagIcon, { backgroundColor: isSynced ? '#e8f5e9' : '#fff7ed' }]}>
-                  <Layers size={20} color={isSynced ? '#1a5c38' : '#ea580c'} />
-                </View>
-
-                <View style={styles.itemMeta}>
-                  <Text style={styles.itemBatch}>{item.batchNumber}</Text>
-                  <Text style={styles.itemPoint}>{item.collectionPointName}</Text>
-                  <Text style={styles.itemTime}>
-                    {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.itemRight}>
-                <Text style={styles.itemKg}>{item.weightKg} kg</Text>
-
-                <View style={[styles.statusChip, isSynced ? styles.chipSynced : styles.chipPending]}>
-                  {isSynced ? (
-                    <CheckCircle2 size={10} color="#15803d" />
-                  ) : (
-                    <Clock size={10} color="#c2410c" />
-                  )}
-                  <Text style={[styles.statusChipText, { color: isSynced ? '#15803d' : '#c2410c' }]}>
-                    {item.syncStatus}
-                  </Text>
-                </View>
-              </View>
+              <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+                {tab.label}
+              </Text>
             </TouchableOpacity>
           );
         })}
+      </View>
 
-        <View style={{ height: 24 }} />
-      </ScrollView>
+      {/* Collections List */}
+      <SectionHeader title="Collected Bags" subtitle={`${filtered.length} record${filtered.length !== 1 ? 's' : ''}`} />
 
-      <BottomNav />
-    </View>
+      {filtered.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconBox}>
+            <Layers size={32} color={colors.textMuted} />
+          </View>
+          <Text style={styles.emptyTitle}>No collections found</Text>
+          <Text style={styles.emptySubtitle}>
+            Try adjusting your search or tab filter.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          ItemSeparatorComponent={renderSeparator}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
+
+      <View style={styles.bottomSpacer} />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.surface,
-  },
-  scroll: {
-    flex: 1,
-    padding: 16,
-  },
-  addBtn: {
-    backgroundColor: '#2563eb',
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+  searchContainer: {
+    marginBottom: 16,
   },
   summaryCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
+    marginBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 16,
+  },
+  summaryLeft: {
+    gap: 4,
   },
   summaryTitle: {
     fontSize: 12,
@@ -151,50 +209,58 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   summaryKg: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
     color: colors.textPrimary,
     marginTop: 2,
   },
   summaryRight: {
-    gap: 6,
-    alignItems: 'flex-end',
+    gap: 8,
   },
   statPill: {
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  statPillPending: {
-    backgroundColor: '#fff7ed',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   statPillText: {
     fontSize: 10,
     fontWeight: '700',
     color: '#15803d',
   },
-  sectionHeader: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 10,
+  tabsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+    paddingHorizontal: 4,
+  },
+  tabItem: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  tabActive: {
+    backgroundColor: '#eff6ff',
+    borderColor: '#2563eb',
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  tabLabelActive: {
+    color: '#2563eb',
   },
   itemCard: {
+    marginBottom: 10,
+  },
+  itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 10,
-  },
-  itemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
   },
   bagIcon: {
     width: 44,
@@ -224,7 +290,7 @@ const styles = StyleSheet.create({
   },
   itemRight: {
     alignItems: 'flex-end',
-    gap: 4,
+    gap: 6,
   },
   itemKg: {
     fontSize: 15,
@@ -232,21 +298,44 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   statusChip: {
-    flexDirection: 'row',
+    minWidth: 70,
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
   },
-  chipSynced: {
-    backgroundColor: '#ecfdf5',
+  separator: {
+    height: 1,
+    backgroundColor: colors.borderLight,
   },
-  chipPending: {
-    backgroundColor: '#fff7ed',
+  listContent: {
+    paddingBottom: 20,
   },
-  statusChipText: {
-    fontSize: 10,
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 32,
+  },
+  emptyIconBox: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: 16,
     fontWeight: '700',
+    color: colors.textPrimary,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  bottomSpacer: {
+    height: 20,
   },
 });

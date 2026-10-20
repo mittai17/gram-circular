@@ -1,17 +1,16 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { HeaderBar } from '../../components/common/HeaderBar';
-import { BottomNav } from '../../components/common/BottomNav';
-import { CITIZEN_REPORTS } from '../../lib/mock-data';
+import { Screen } from '../../components/ui/Screen';
+import { Card } from '../../components/ui/Card';
+import { StatCard } from '../../components/ui/StatCard';
+import { Button } from '../../components/ui/Button';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { Input } from '../../components/ui/Input';
 import { colors } from '../../theme/colors';
+import { CITIZEN_REPORTS } from '../../lib/mock-data';
+import { CitizenBinReport } from '../../types';
 import {
   User,
   Award,
@@ -21,152 +20,176 @@ import {
   ChevronRight,
   MapPin,
   CheckCircle2,
+  Settings,
+  ToggleLeft,
+  Mail,
+  Phone,
+  Clock,
 } from 'lucide-react-native';
 
-const CITIZEN_MENU = [
-  { id: 'profile', title: 'My Resident Profile', icon: User, route: null },
-  { id: 'reports', title: 'My Reported Bins History', icon: AlertTriangle, route: null, badge: '4 Logged' },
-  { id: 'rewards', title: 'Redeem Eco-Points', icon: Award, route: '/(citizen)/rewards', badge: '125 pts' },
-  { id: 'help', title: 'Gram Panchayat Helpline', icon: HelpCircle, route: null },
+const CITIZEN_PRIMARY = colors.roles.citizen.primary; // #d97706
+const CITIZEN_LIGHT = colors.roles.citizen.light; // #fef3c7
+
+const CITIZEN_MENU: { id: string; title: string; subtitle: string; icon: any; route?: string }[] = [
+  { id: 'profile', title: 'My Resident Profile', subtitle: 'Edit your details & address', icon: User },
+  { id: 'reports', title: 'My Reported Bins History', subtitle: '4 bins logged this month', icon: AlertTriangle, route: '/(citizen)/report-bin' },
+  { id: 'rewards', title: 'Redeem Eco-Points', subtitle: '125 pts available', icon: Award, route: '/(citizen)/rewards' },
+  { id: 'help', title: 'Gram Panchayat Helpline', subtitle: '+91 94420 54321', icon: HelpCircle },
+];
+
+const NOTIFICATION_SETTINGS: { id: string; title: string; subtitle: string; defaultValue: boolean }[] = [
+  { id: 'collection', title: 'Collection Day Reminders', subtitle: 'Notify before pickup each ward day', defaultValue: true },
+  { id: 'report', title: 'Report Status Updates', subtitle: 'Get notified when your bin report is collected', defaultValue: true },
+  { id: 'promo', title: 'Promotions & Rewards', subtitle: 'New vouchers and eco-point offers', defaultValue: false },
 ];
 
 export default function CitizenProfileScreen() {
   const router = useRouter();
+  const [toggles, setToggles] = useState<Record<string, boolean>>(
+    NOTIFICATION_SETTINGS.reduce((acc, s) => ({ ...acc, [s.id]: s.defaultValue }), {})
+  );
+
+  const handleToggle = (id: string) => {
+    setToggles((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   return (
-    <View style={styles.screen}>
-      <HeaderBar title="Resident Profile" subtitle="Karthik S • Shanti Nagar" showBack />
-
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* User Card */}
-        <View style={styles.profileCard}>
-          <View style={styles.avatar}>
-            <User size={32} color="#ffffff" />
-          </View>
-          <Text style={styles.name}>Karthik S</Text>
-          <Text style={styles.role}>Resident • Shanti Nagar Ward 3</Text>
-          <View style={styles.badge}>
-            <MapPin size={12} color="#d97706" />
-            <Text style={styles.badgeText}>House No. 42, Gandhi Street</Text>
-          </View>
+    <Screen title="Citizen Profile" subtitle="Karthik S • Shanti Nagar Ward 3">
+      {/* User Card */}
+      <Card padding={18} style={styles.profileCard}>
+        <View style={styles.avatar}>
+          <User size={34} color="#ffffff" />
         </View>
-
-        {/* Eco Wallet Stat Card */}
-        <View style={styles.statsCard}>
-          <View style={styles.statCol}>
-            <Text style={styles.statNum}>125</Text>
-            <Text style={styles.statLabel}>Eco-Points</Text>
-          </View>
-          <View style={styles.statDiv} />
-          <View style={styles.statCol}>
-            <Text style={styles.statNum}>4</Text>
-            <Text style={styles.statLabel}>Reports Logged</Text>
-          </View>
-          <View style={styles.statDiv} />
-          <View style={styles.statCol}>
-            <Text style={styles.statNum}>Rank #14</Text>
-            <Text style={styles.statLabel}>Village Rank</Text>
-          </View>
+        <Text style={styles.name}>Karthik S</Text>
+        <Text style={styles.role}>Resident • Shanti Nagar Ward 3</Text>
+        <View style={styles.badge}>
+          <MapPin size={12} color={CITIZEN_PRIMARY} />
+          <Text style={styles.badgeText}>House No. 42, Gandhi Street</Text>
         </View>
+      </Card>
 
-        {/* Recent Reports Log */}
-        <Text style={styles.sectionHeader}>My Recent Bin Reports</Text>
-        {CITIZEN_REPORTS.slice(0, 2).map((r) => (
-          <View key={r.id} style={styles.reportItem}>
-            <View style={styles.reportLeft}>
-              <Text style={styles.reportLoc}>{r.locationName}</Text>
-              <Text style={styles.reportDate}>{r.createdAt} • {r.stream} Waste</Text>
-            </View>
-            <View style={styles.reportRight}>
-              <View style={styles.statusBadge}>
-                <CheckCircle2 size={10} color="#15803d" />
-                <Text style={styles.statusText}>{r.status}</Text>
+      {/* Eco Wallet */}
+      <StatCard
+        value="125 pts"
+        label="Eco-Points Balance"
+        subtext="Redeem for compost & vouchers"
+        icon={<Award size={20} color={CITIZEN_PRIMARY} />}
+        iconBg={CITIZEN_LIGHT}
+        iconColor={CITIZEN_PRIMARY}
+      />
+
+      {/* Recent Reports */}
+      <SectionHeader title="My Recent Bin Reports" subtitle="Your community watch activity" />
+      <View style={styles.reportsList}>
+        {CITIZEN_REPORTS.slice(0, 3).map((r: CitizenBinReport) => (
+          <Card key={r.id} padding={12} style={styles.reportItem}>
+            <View style={styles.reportRow}>
+              <View style={styles.reportLeft}>
+                <Text style={styles.reportLoc}>{r.locationName}</Text>
+                <Text style={styles.reportDate}>{r.createdAt} • {r.stream} Waste</Text>
               </View>
-              <Text style={styles.ptsText}>+{r.pointsEarned} pts</Text>
+              <View style={styles.reportRight}>
+                <View style={styles.statusBadgeRow}>
+                  <CheckCircle2 size={10} color="#15803d" />
+                  <StatusBadge variant="success" small>{r.status}</StatusBadge>
+                </View>
+                <Text style={styles.reportPts}>+{r.pointsEarned} pts</Text>
+              </View>
             </View>
-          </View>
+          </Card>
         ))}
+      </View>
 
-        {/* Menu Items */}
-        <View style={styles.menuCard}>
-          {CITIZEN_MENU.map((item, index) => {
-            const IconComp = item.icon;
-            const isLast = index === CITIZEN_MENU.length - 1;
-
-            return (
-              <TouchableOpacity
-                key={item.id}
-                style={[styles.menuItem, !isLast && styles.menuItemBorder]}
-                onPress={() => {
-                  if (item.route) {
-                    router.push(item.route as any);
-                  } else {
-                    Alert.alert(item.title, `${item.title} opened.`);
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={styles.menuLeft}>
-                  <View style={styles.menuIconBox}>
-                    <IconComp size={18} color="#d97706" />
-                  </View>
+      {/* Menu Items */}
+      <SectionHeader title="Settings & Support" subtitle="Manage your account preferences" />
+      <Card padding={0} style={styles.menuCard}>
+        {CITIZEN_MENU.map((item, index) => {
+          const IconComp = item.icon;
+          const isLast = index === CITIZEN_MENU.length - 1;
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.menuItem, !isLast && styles.menuItemBorder]}
+              onPress={() => {
+                if (item.route) {
+                  router.push(item.route);
+                } else if (item.id === 'help') {
+                  Alert.alert('Gram Panchayat Helpline', '+91 94420 54321 • admin@panchayat.gov.in');
+                } else {
+                  Alert.alert(item.title, `${item.title} opened.`);
+                }
+              }}
+              activeOpacity={0.75}
+            >
+              <View style={styles.menuLeft}>
+                <View style={styles.menuIconBox}>
+                  <IconComp size={18} color={CITIZEN_PRIMARY} />
+                </View>
+                <View style={styles.menuTexts}>
                   <Text style={styles.menuTitle}>{item.title}</Text>
+                  <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
                 </View>
+              </View>
+              <View style={styles.menuRight}>
+                {item.route && <ChevronRight size={16} color={colors.textSecondary} />}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </Card>
 
-                <View style={styles.menuRight}>
-                  {item.badge && (
-                    <View style={styles.badgePill}>
-                      <Text style={styles.badgePillText}>{item.badge}</Text>
-                    </View>
-                  )}
-                  <ChevronRight size={16} color={colors.textSecondary} />
-                </View>
+      {/* Notification Preferences */}
+      <SectionHeader title="Notification Preferences" subtitle="Choose what you'd like to hear about" />
+      <View style={styles.settingsList}>
+        {NOTIFICATION_SETTINGS.map((s) => (
+          <Card key={s.id} padding={12} style={styles.settingCard}>
+            <View style={styles.settingRow}>
+              <View style={styles.settingMeta}>
+                <Text style={styles.settingTitle}>{s.title}</Text>
+                <Text style={styles.settingSubtitle}>{s.subtitle}</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.toggleTrack, toggles[s.id] && styles.toggleTrackOn]}
+                onPress={() => handleToggle(s.id)}
+                activeOpacity={0.8}
+              >
+                <AnimatedThumb toggles={toggles} id={s.id} />
               </TouchableOpacity>
-            );
-          })}
-        </View>
+            </View>
+          </Card>
+        ))}
+      </View>
 
-        {/* Logout Button */}
-        <TouchableOpacity
-          style={styles.logoutBtn}
-          onPress={() => router.push('/')}
-          activeOpacity={0.8}
-        >
-          <LogOut size={16} color="#dc2626" />
-          <Text style={styles.logoutText}>Return to Demo Selector</Text>
-        </TouchableOpacity>
+      {/* Logout */}
+      <TouchableOpacity
+        style={styles.logoutBtn}
+        onPress={() => router.push('/')}
+        activeOpacity={0.8}
+      >
+        <LogOut size={16} color="#dc2626" />
+        <Text style={styles.logoutText}>Return to Demo Selector</Text>
+      </TouchableOpacity>
+    </Screen>
+  );
+}
 
-        <View style={{ height: 24 }} />
-      </ScrollView>
-
-      <BottomNav />
+function AnimatedThumb({ toggles, id }: { toggles: Record<string, boolean>; id: string }) {
+  return (
+    <View style={[styles.toggleThumb, toggles[id] && styles.toggleThumbOn]}>
+      {toggles[id] ? <CheckCircle2 size={14} color="#ffffff" /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.surface,
-  },
-  scroll: {
-    flex: 1,
-    padding: 16,
-  },
   profileCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 14,
   },
   avatar: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#d97706',
+    backgroundColor: CITIZEN_PRIMARY,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -185,7 +208,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fef3c7',
+    backgroundColor: CITIZEN_LIGHT,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
@@ -196,49 +219,14 @@ const styles = StyleSheet.create({
     color: '#b45309',
     fontWeight: '700',
   },
-  statsCard: {
-    flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 16,
+  reportsList: {
+    gap: 8,
   },
-  statCol: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statNum: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#d97706',
-  },
-  statLabel: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  statDiv: {
-    width: 1,
-    backgroundColor: colors.border,
-  },
-  sectionHeader: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 8,
-  },
-  reportItem: {
+  reportItem: {},
+  reportRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 8,
   },
   reportLeft: {
     flex: 1,
@@ -255,35 +243,20 @@ const styles = StyleSheet.create({
   },
   reportRight: {
     alignItems: 'flex-end',
-    gap: 2,
+    gap: 4,
   },
-  statusBadge: {
+  statusBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    gap: 4,
+    marginBottom: 2,
   },
-  statusText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#15803d',
-  },
-  ptsText: {
+  reportPts: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#d97706',
+    color: CITIZEN_PRIMARY,
   },
-  menuCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginTop: 8,
-    marginBottom: 16,
-  },
+  menuCard: {},
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -299,35 +272,76 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
   },
   menuIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#fef3c7',
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: CITIZEN_LIGHT,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  menuTexts: {},
   menuTitle: {
     fontSize: 13,
     fontWeight: '600',
     color: colors.textPrimary,
   },
+  menuSubtitle: {
+    fontSize: 10,
+    color: colors.textMuted,
+    marginTop: 1,
+  },
   menuRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+  },
+  settingsList: {
     gap: 8,
   },
-  badgePill: {
-    backgroundColor: '#fef3c7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+  settingCard: {},
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  badgePillText: {
-    fontSize: 10,
-    color: '#b45309',
+  settingMeta: {
+    flex: 1,
+  },
+  settingTitle: {
+    fontSize: 13,
     fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  settingSubtitle: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
+  toggleTrack: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#e2e8f0',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    minHeight: 44,
+  },
+  toggleTrackOn: {
+    backgroundColor: CITIZEN_PRIMARY,
+    alignItems: 'flex-end',
+  },
+  toggleThumb: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#ffffff',
+  },
+  toggleThumbOn: {
+    transform: [{ translateX: 20 }],
   },
   logoutBtn: {
     flexDirection: 'row',
@@ -339,6 +353,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderWidth: 1,
     borderColor: '#fecaca',
+    minHeight: 52,
   },
   logoutText: {
     color: '#dc2626',

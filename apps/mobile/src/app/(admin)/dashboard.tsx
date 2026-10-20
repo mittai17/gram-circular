@@ -1,28 +1,21 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { HeaderBar } from '../../components/common/HeaderBar';
 import { OfflineBanner } from '../../components/common/OfflineBanner';
 import { BottomNav } from '../../components/common/BottomNav';
+import { Card, Button, StatCard, StatusBadge, SectionHeader } from '../../components/ui';
 import { MiniBarChart } from '../../components/charts/MiniBarChart';
 import { ADMIN_STATS, VILLAGES_DATA, WORKER_ROUTE } from '../../lib/mock-data';
 import { colors } from '../../theme/colors';
 import {
   MapPin,
   Trash2,
-  TrendingUp,
   Truck,
-  ArrowUpRight,
-  ChevronRight,
   FileText,
   Users,
-  CheckCircle2,
+  ChevronRight,
+  Layers,
 } from 'lucide-react-native';
 
 export default function AdminDashboard() {
@@ -36,179 +29,170 @@ export default function AdminDashboard() {
 
   return (
     <View style={styles.screen}>
-      <HeaderBar
-        title="Panchayat Admin"
-        subtitle="Kaveripattinam Block Union"
-      />
+      <HeaderBar title="Panchayat Admin" subtitle="Kaveripattinam Block Union" />
       <OfflineBanner />
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Top 2 Quick Counters */}
-        <View style={styles.topCountersRow}>
-          <TouchableOpacity
-            style={styles.topCounterCard}
-            onPress={() => router.push('/(admin)/villages')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.counterIconBox, { backgroundColor: '#e8f5e9' }]}>
-              <MapPin size={18} color="#1a5c38" />
-            </View>
-            <View>
-              <Text style={styles.counterNumber}>{ADMIN_STATS.villagesCount}</Text>
-              <Text style={styles.counterLabel}>Villages</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.topCounterCard}
-            onPress={() => router.push('/(admin)/routes')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.counterIconBox, { backgroundColor: '#eff6ff' }]}>
-              <Trash2 size={18} color="#2563eb" />
-            </View>
-            <View>
-              <Text style={styles.counterNumber}>{ADMIN_STATS.collectionPointsCount}</Text>
-              <Text style={styles.counterLabel}>Collection Points</Text>
-            </View>
-          </TouchableOpacity>
+        {/* Quick Counters */}
+        <View style={styles.row}>
+          <StatCard
+            value={String(ADMIN_STATS.villagesCount)}
+            label="Villages"
+            subtext="Monitored across block"
+            icon={<MapPin size={20} color={colors.primary} />}
+            iconBg={colors.roles.admin.light}
+            iconColor={colors.primary}
+            style={{ flex: 1 }}
+          />
+          <StatCard
+            value={String(ADMIN_STATS.collectionPointsCount)}
+            label="Collection Points"
+            subtext="Active drop-off locations"
+            icon={<Trash2 size={20} color="#2563eb" />}
+            iconBg="#eff6ff"
+            iconColor="#2563eb"
+            style={{ flex: 1 }}
+          />
         </View>
 
-        {/* 2 Main KPI Cards */}
-        <View style={styles.kpiRow}>
-          <View style={styles.kpiCard}>
-            <View style={styles.kpiHeader}>
-              <Text style={styles.kpiTitle}>Total Waste</Text>
-              <View style={styles.badgeSuccess}>
-                <ArrowUpRight size={12} color="#15803d" />
-                <Text style={styles.badgeText}>+{ADMIN_STATS.totalWasteGrowth}%</Text>
-              </View>
-            </View>
-            <Text style={styles.kpiValue}>
-              {ADMIN_STATS.totalWasteKg.toLocaleString()} <Text style={styles.kpiUnit}>kg</Text>
-            </Text>
-            <Text style={styles.kpiSub}>Recorded this week</Text>
-          </View>
-
-          <View style={[styles.kpiCard, { borderColor: '#bbf7d0', backgroundColor: '#f0fdf4' }]}>
-            <View style={styles.kpiHeader}>
-              <Text style={[styles.kpiTitle, { color: '#166534' }]}>MLP Waste</Text>
-              <View style={[styles.badgeSuccess, { backgroundColor: '#dcfce7' }]}>
-                <ArrowUpRight size={12} color="#15803d" />
-                <Text style={styles.badgeText}>+{ADMIN_STATS.mlpWasteGrowth}%</Text>
-              </View>
-            </View>
-            <Text style={[styles.kpiValue, { color: '#14532d' }]}>
-              {ADMIN_STATS.mlpWasteKg} <Text style={styles.kpiUnit}>kg</Text>
-            </Text>
-            <Text style={styles.kpiSub}>Traceable multi-layer</Text>
-          </View>
+        {/* KPI Cards */}
+        <View style={styles.row}>
+          <StatCard
+            value={`${ADMIN_STATS.totalWasteKg.toLocaleString()} kg`}
+            label="Total Waste"
+            subtext="Recorded this week"
+            trend={`+${ADMIN_STATS.totalWasteGrowth}%`}
+            trendPositive
+            icon={<Trash2 size={20} color="#15803d" />}
+            iconBg="#ecfdf5"
+            iconColor="#15803d"
+            style={{ flex: 1 }}
+          />
+          <StatCard
+            value={`${ADMIN_STATS.mlpWasteKg} kg`}
+            label="MLP Waste"
+            subtext="Traceable multi-layer"
+            trend={`+${ADMIN_STATS.mlpWasteGrowth}%`}
+            trendPositive
+            icon={<Layers size={20} color="#166534" />}
+            iconBg="#f0fdf4"
+            iconColor="#166534"
+            style={{ flex: 1 }}
+          />
         </View>
 
         {/* Collection Trend Chart */}
-        <View style={styles.chartCard}>
-          <View style={styles.cardHeaderRow}>
-            <View>
-              <Text style={styles.cardSectionTitle}>Collection Trend</Text>
-              <Text style={styles.cardSectionSub}>Daily intake (kg) past 7 days</Text>
-            </View>
-            <View style={styles.chartBadge}>
-              <TrendingUp size={12} color="#15803d" />
-              <Text style={styles.chartBadgeText}>Peak 230 kg</Text>
-            </View>
-          </View>
-
-          <MiniBarChart data={chartData} height={100} />
-        </View>
+        <SectionHeader
+          title="Collection Trend"
+          subtitle="Daily intake (kg) — past 7 days"
+        />
+        <Card padding={16} shadow="md">
+          <MiniBarChart
+            data={chartData}
+            height={110}
+            barColor="#2d8653"
+            highlightColor={colors.primary}
+          />
+        </Card>
 
         {/* Route Optimization Live Banner */}
-        <View style={styles.routeCard}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.routeHeaderLeft}>
-              <View style={styles.vehiclePill}>
-                <Truck size={14} color="#ffffff" />
-                <Text style={styles.vehiclePillText}>Vehicle 1</Text>
-              </View>
-              <Text style={styles.routeStatsText}>
-                {WORKER_ROUTE.completedStops}/{WORKER_ROUTE.totalStops} stops • {WORKER_ROUTE.totalDistanceKm} km
+        <SectionHeader
+          title="Route Optimization"
+          subtitle="Live vehicle status"
+        />
+        <Card padding={14} shadow="md">
+          <View style={styles.routeHeader}>
+            <View style={styles.routeIconBox}>
+              <Truck size={20} color="#ffffff" />
+            </View>
+            <View style={styles.routeMeta}>
+              <Text style={styles.routeVehicle}>{WORKER_ROUTE.vehicleNumber}</Text>
+              <Text style={styles.routeDriver}>
+                {WORKER_ROUTE.driverName} • {WORKER_ROUTE.completedStops}/{WORKER_ROUTE.totalStops} stops
               </Text>
             </View>
-            <TouchableOpacity
-              onPress={() => router.push('/(admin)/routes')}
-              style={styles.viewFullBtn}
-            >
-              <Text style={styles.viewFullBtnText}>Route Map</Text>
-              <ChevronRight size={14} color="#1a5c38" />
-            </TouchableOpacity>
+            <StatusBadge variant="success" small>
+              Optimized
+            </StatusBadge>
           </View>
-
-          <View style={styles.stopsPreviewList}>
-            {WORKER_ROUTE.stops.slice(0, 3).map((stop, i) => (
-              <View key={stop.id} style={styles.stopItemRow}>
-                <View style={styles.stopNumCircle}>
-                  <Text style={styles.stopNumText}>{i + 1}</Text>
-                </View>
-                <View style={styles.stopMeta}>
-                  <Text style={styles.stopName}>{stop.name}</Text>
-                  <Text style={styles.stopWard}>{stop.ward}</Text>
-                </View>
-                <Text style={styles.stopWeight}>{stop.weightKg} kg</Text>
-              </View>
-            ))}
+          <View style={styles.routeStatsRow}>
+            <View style={styles.routeStat}>
+              <Text style={styles.routeStatValue}>{WORKER_ROUTE.totalDistanceKm} km</Text>
+              <Text style={styles.routeStatLabel}>Total Distance</Text>
+            </View>
+            <View style={styles.routeStatDivider} />
+            <View style={styles.routeStat}>
+              <Text style={styles.routeStatValue}>~5.0 km</Text>
+              <Text style={styles.routeStatLabel}>Avg per Stop</Text>
+            </View>
           </View>
-        </View>
+          <Button
+            title="View Route Map"
+            variant="outline"
+            style={{ flex: 1, marginTop: 8 }}
+            onPress={() => router.push('/(admin)/routes')}
+            leftIcon={<ChevronRight size={14} color={colors.primary} />}
+          />
+        </Card>
 
-        {/* Villages Overview Preview */}
-        <View style={styles.villagesCard}>
-          <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardSectionTitle}>Monitored Villages</Text>
-            <TouchableOpacity onPress={() => router.push('/(admin)/villages')}>
-              <Text style={styles.linkText}>View all {VILLAGES_DATA.length}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {VILLAGES_DATA.slice(0, 2).map((village) => (
-            <TouchableOpacity
-              key={village.id}
-              style={styles.villageItem}
-              onPress={() => router.push('/(admin)/villages')}
-            >
-              <View style={styles.villageLeft}>
+        {/* Monitored Villages Preview */}
+        <SectionHeader
+          title="Monitored Villages"
+          subtitle="Top performing villages"
+          onViewAll={() => router.push('/(admin)/villages')}
+          viewAllLabel="View All"
+        />
+        <Card padding={0} shadow="none">
+          {VILLAGES_DATA.slice(0, 3).map((village) => (
+            <View key={village.id} style={styles.villageRow}>
+              <View style={styles.villageInfo}>
                 <Text style={styles.villageName}>{village.name}</Text>
                 <Text style={styles.villageSub}>
                   {village.collectionPointsCount} Points • {village.monthlyTotalKg} kg/mo
                 </Text>
               </View>
-              <View style={styles.villageRight}>
-                <View style={styles.activeTag}>
-                  <Text style={styles.activeTagText}>Active</Text>
-                </View>
-                <Text style={styles.growthText}>+{village.growthPercentage}%</Text>
+              <View style={styles.villageStatus}>
+                <StatusBadge
+                  variant={village.status === 'Active' ? 'success' : 'warning'}
+                  small
+                >
+                  {village.status}
+                </StatusBadge>
+                <Text style={styles.villageGrowth}>+{village.growthPercentage}%</Text>
               </View>
-            </TouchableOpacity>
+            </View>
           ))}
-        </View>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.viewAllRow}
+            onPress={() => router.push('/(admin)/villages')}
+          >
+            <MapPin size={14} color={colors.primary} />
+            <Text style={styles.viewAllText}>View All {VILLAGES_DATA.length} Villages</Text>
+            <ChevronRight size={14} color={colors.textMuted} />
+          </TouchableOpacity>
+        </Card>
 
         {/* Quick Links */}
-        <View style={styles.quickLinksRow}>
-          <TouchableOpacity
-            style={styles.quickActionBtn}
+        <SectionHeader title="Quick Actions" />
+        <View style={styles.row}>
+          <Button
+            title="Compliance Reports"
+            variant="outline"
+            style={{ flex: 1 }}
             onPress={() => router.push('/(admin)/reports')}
-          >
-            <FileText size={16} color="#1a5c38" />
-            <Text style={styles.quickActionText}>Compliance Reports</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.quickActionBtn}
+            leftIcon={<FileText size={16} color={colors.primary} />}
+          />
+          <Button
+            title="User Roster"
+            variant="outline"
+            style={{ flex: 1 }}
             onPress={() => router.push('/(admin)/users')}
-          >
-            <Users size={16} color="#1a5c38" />
-            <Text style={styles.quickActionText}>User Roster</Text>
-          </TouchableOpacity>
+            leftIcon={<Users size={16} color={colors.primary} />}
+          />
         </View>
 
-        <View style={{ height: 20 }} />
+        <View style={{ height: 24 }} />
       </ScrollView>
 
       <BottomNav />
@@ -225,237 +209,76 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  topCountersRow: {
+  row: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
+    gap: 10,
+    marginBottom: 14,
   },
-  topCounterCard: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 12,
+  routeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
+    marginBottom: 12,
   },
-  counterIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+  routeIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  counterNumber: {
-    fontSize: 18,
+  routeMeta: {
+    flex: 1,
+  },
+  routeVehicle: {
+    fontSize: 15,
     fontWeight: '800',
     color: colors.textPrimary,
   },
-  counterLabel: {
+  routeDriver: {
     fontSize: 11,
     color: colors.textSecondary,
-    fontWeight: '500',
+    marginTop: 2,
   },
-  kpiRow: {
+  routeStatsRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 14,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    paddingTop: 10,
   },
-  kpiCard: {
+  routeStat: {
     flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  kpiHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
   },
-  kpiTitle: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '600',
+  routeStatDivider: {
+    width: 1,
+    backgroundColor: colors.borderLight,
   },
-  kpiValue: {
-    fontSize: 20,
+  routeStatValue: {
+    fontSize: 16,
     fontWeight: '800',
     color: colors.textPrimary,
   },
-  kpiUnit: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  kpiSub: {
+  routeStatLabel: {
     fontSize: 10,
     color: colors.textMuted,
     marginTop: 2,
   },
-  badgeSuccess: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    gap: 2,
-  },
-  badgeText: {
-    fontSize: 10,
-    color: '#15803d',
-    fontWeight: '700',
-  },
-  chartCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 14,
-  },
-  cardHeaderRow: {
+  villageRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderBottomWidth: 0.8,
+    borderBottomColor: colors.borderLight,
   },
-  cardSectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  cardSectionSub: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 1,
-  },
-  chartBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  chartBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#15803d',
-  },
-  routeCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 14,
-  },
-  routeHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  vehiclePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1a5c38',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    gap: 4,
-  },
-  vehiclePillText: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  routeStatsText: {
-    fontSize: 11,
-    color: colors.textSecondary,
-  },
-  viewFullBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  viewFullBtnText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#1a5c38',
-  },
-  stopsPreviewList: {
-    marginTop: 10,
-    gap: 8,
-  },
-  stopItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  stopNumCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#e2e8f0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  stopNumText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#334155',
-  },
-  stopMeta: {
-    flex: 1,
-  },
-  stopName: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  stopWard: {
-    fontSize: 10,
-    color: colors.textSecondary,
-  },
-  stopWeight: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#1a5c38',
-  },
-  villagesCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 14,
-  },
-  linkText: {
-    fontSize: 11,
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  villageItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderTopWidth: 0.8,
-    borderTopColor: colors.borderLight,
-  },
-  villageLeft: {
+  villageInfo: {
     flex: 1,
   },
   villageName: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
   },
@@ -464,46 +287,30 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 1,
   },
-  villageRight: {
+  villageStatus: {
     alignItems: 'flex-end',
-    gap: 2,
+    gap: 6,
   },
-  activeTag: {
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  activeTagText: {
-    fontSize: 9,
+  villageGrowth: {
+    fontSize: 11,
     fontWeight: '700',
     color: '#15803d',
   },
-  growthText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#15803d',
+  divider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginVertical: 4,
   },
-  quickLinksRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 14,
-  },
-  quickActionBtn: {
-    flex: 1,
+  viewAllRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
-  quickActionText: {
+  viewAllText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    fontWeight: '700',
+    color: colors.primary,
   },
 });

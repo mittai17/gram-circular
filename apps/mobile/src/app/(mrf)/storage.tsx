@@ -1,65 +1,82 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { HeaderBar } from '../../components/common/HeaderBar';
-import { BottomNav } from '../../components/common/BottomNav';
-import { MRF_STORAGE_ZONES } from '../../lib/mock-data';
+import { Screen } from '../../components/ui/Screen';
+import { Card } from '../../components/ui/Card';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { Button } from '../../components/ui/Button';
+import { MRF_STORAGE_ZONES, MRF_BATCHES } from '../../lib/mock-data';
 import { colors } from '../../theme/colors';
 import {
   Archive,
-  CheckCircle2,
   AlertTriangle,
-  ArrowRight,
+  ChevronRight,
   Layers,
+  CheckCircle2,
 } from 'lucide-react-native';
+
+const mrf = colors.roles.mrf;
+
+type Zone = (typeof MRF_STORAGE_ZONES)[number];
+
+const BATCH_TO_PLACE = MRF_BATCHES[0];
 
 export default function MrfStorageScreen() {
   const router = useRouter();
-  const [selectedZone, setSelectedZone] = useState('zone-a');
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>('zone-a');
 
-  const handleUpdate = () => {
-    const zone = MRF_STORAGE_ZONES.find((z) => z.id === selectedZone);
+  const selectedZone = MRF_STORAGE_ZONES.find((z) => z.id === selectedZoneId);
+  const isZoneNearFull = selectedZone ? selectedZone.percentage > 85 : false;
+
+  const handleAssignBatch = () => {
+    if (!selectedZone) {
+      Alert.alert('Select a zone', 'Please select a storage zone before assigning.');
+      return;
+    }
     Alert.alert(
-      'Storage Updated',
-      `Batch MLP-2026-0143 (12.8 kg) assigned to ${zone?.name}. Inventory records updated.`,
-      [{ text: 'View Inventory', onPress: () => router.push('/(mrf)/inventory') }]
+      'Batch Assigned',
+      `Batch ${BATCH_TO_PLACE.batchNumber} (${BATCH_TO_PLACE.weightKg} kg) assigned to ${selectedZone.name}.`,
+      [
+        { text: 'View Inventory', onPress: () => router.push('/(mrf)/inventory') },
+        { text: 'OK', style: 'cancel' },
+      ]
     );
   };
 
-  return (
-    <View style={styles.screen}>
-      <HeaderBar title="Storage Update" subtitle="Assign Batch to Storage Zone" showBack />
+  const handleZonePress = (zone: Zone) => () => setSelectedZoneId(zone.id);
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.infoBanner}>
-          <Layers size={18} color="#1a5c38" />
+  return (
+    <Screen title="Storage Zone Allocation" subtitle="Assign batches to storage zones" showBack>
+      {/* Batch to place banner */}
+      <Card style={styles.bannerCard} padding={14}>
+        <View style={styles.bannerRow}>
+          <View style={[styles.bannerIcon, { backgroundColor: '#fff7ed' }]}>
+            <Layers size={18} color={mrf.primary} />
+          </View>
           <View style={styles.bannerMeta}>
-            <Text style={styles.bannerTitle}>Batch: MLP-2026-0143 (12.8 kg)</Text>
-            <Text style={styles.bannerSub}>Grade A • Ready for pallet stacking</Text>
+            <Text style={styles.bannerTitle}>Batch to Place</Text>
+            <Text style={styles.bannerSub}>
+              {BATCH_TO_PLACE.batchNumber} • {BATCH_TO_PLACE.weightKg} kg • Grade {BATCH_TO_PLACE.qualityGrade || 'A'}
+            </Text>
           </View>
         </View>
+      </Card>
 
-        <Text style={styles.sectionHeader}>Select Storage Zone</Text>
+      <SectionHeader title="Storage Zones" />
 
-        {MRF_STORAGE_ZONES.map((zone) => {
-          const isSelected = selectedZone === zone.id;
-          const isHighCapacity = zone.percentage > 80;
-
-          return (
+      {MRF_STORAGE_ZONES.map((zone) => {
+        const isSelected = selectedZoneId === zone.id;
+        const nearFull = zone.percentage > 85;
+        return (
+          <Card
+            key={zone.id}
+            style={{ ...styles.zoneCard, ...(isSelected ? styles.zoneCardSelected : {}) }}
+            padding={16}
+          >
             <TouchableOpacity
-              key={zone.id}
-              style={[
-                styles.zoneCard,
-                isSelected && styles.zoneCardSelected,
-              ]}
-              onPress={() => setSelectedZone(zone.id)}
+              style={styles.zoneTouch}
+              onPress={handleZonePress(zone)}
               activeOpacity={0.8}
             >
               <View style={styles.zoneHeader}>
@@ -73,90 +90,92 @@ export default function MrfStorageScreen() {
                     {isSelected && <View style={styles.radioDot} />}
                   </View>
                   <View>
-                    <Text style={[styles.zoneName, isSelected && { color: colors.primary }]}>
+                    <Text style={[styles.zoneName, isSelected && { color: mrf.primary }]}>
                       {zone.name}
                     </Text>
                     <Text style={styles.zoneType}>{zone.type}</Text>
                   </View>
                 </View>
-
                 <View style={styles.zoneRight}>
                   <Text style={styles.zoneKg}>
                     {zone.currentKg} / {zone.capacityKg} kg
                   </Text>
-                  <Text
-                    style={[
-                      styles.zonePercent,
-                      isHighCapacity ? { color: '#dc2626' } : { color: '#15803d' },
-                    ]}
-                  >
-                    {zone.percentage}% capacity
-                  </Text>
+                  <Text style={styles.zonePercent}>{zone.percentage}% capacity</Text>
                 </View>
               </View>
 
               {/* Progress bar */}
-              <View style={styles.barBg}>
-                <View
-                  style={[
-                    styles.barFill,
-                    {
-                      width: `${zone.percentage}%`,
-                      backgroundColor: isHighCapacity ? '#ef4444' : zone.color,
-                    },
-                  ]}
+              <View style={styles.barRow}>
+                <View style={styles.barBg}>
+                  <View
+                    style={[
+                      styles.barFill,
+                      {
+                        width: `${zone.percentage}%`,
+                        backgroundColor: nearFull ? '#dc2626' : zone.color,
+                      },
+                    ]}
+                  />
+                </View>
+                {nearFull && (
+                  <View style={styles.warningRow}>
+                    <AlertTriangle size={12} color="#dc2626" />
+                    <Text style={styles.warningText}>
+                      Near full capacity ({zone.percentage}%) • Consider dispatching
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+
+            {isSelected && (
+              <View style={styles.assignRow}>
+                <StatusBadge
+                  variant={nearFull ? 'warning' : 'success'}
+                  children={`Ready to assign ${BATCH_TO_PLACE.weightKg} kg`}
                 />
               </View>
+            )}
+          </Card>
+        );
+      })}
 
-              {isHighCapacity && (
-                <View style={styles.warningRow}>
-                  <AlertTriangle size={12} color="#dc2626" />
-                  <Text style={styles.warningText}>Near full capacity • Consider dispatching</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
+      {/* Assign Action */}
+      <Button
+        title="Assign Batch to Selected Zone"
+        variant="primary"
+        leftIcon={<Archive size={18} color="#ffffff" />}
+        fullWidth
+        onPress={handleAssignBatch}
+      />
 
-        <TouchableOpacity style={styles.updateBtn} onPress={handleUpdate} activeOpacity={0.85}>
-          <Text style={styles.updateBtnText}>Confirm Zone Placement</Text>
-          <ArrowRight size={16} color="#ffffff" />
-        </TouchableOpacity>
-
-        <View style={{ height: 24 }} />
-      </ScrollView>
-
-      <BottomNav />
-    </View>
+      <View style={styles.bottomSpacer} />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.surface,
+  bannerCard: {
+    marginBottom: 4,
   },
-  scroll: {
-    flex: 1,
-    padding: 16,
-  },
-  infoBanner: {
+  bannerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 16,
+  },
+  bannerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
   bannerMeta: {
     flex: 1,
   },
   bannerTitle: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 13,
+    fontWeight: '700',
     color: colors.textPrimary,
   },
   bannerSub: {
@@ -164,54 +183,47 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  sectionHeader: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 10,
-  },
   zoneCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: colors.border,
     marginBottom: 12,
   },
   zoneCardSelected: {
-    borderColor: '#1a5c38',
-    backgroundColor: '#f8fdf9',
+    borderColor: mrf.primary,
+    borderWidth: 1,
+  },
+  zoneTouch: {
+    minHeight: 44,
   },
   zoneHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 10,
   },
   zoneLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   radioCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioCircleSelected: {
-    borderColor: '#1a5c38',
+    borderColor: mrf.primary,
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#1a5c38',
+    backgroundColor: mrf.primary,
   },
   zoneName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
   },
@@ -224,20 +236,23 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   zoneKg: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
     color: colors.textPrimary,
   },
   zonePercent: {
     fontSize: 11,
     fontWeight: '600',
     marginTop: 2,
+    color: colors.textSecondary,
+  },
+  barRow: {
+    gap: 8,
   },
   barBg: {
     height: 8,
     backgroundColor: '#e2e8f0',
     borderRadius: 4,
-    marginTop: 12,
     overflow: 'hidden',
   },
   barFill: {
@@ -248,26 +263,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 8,
   },
   warningText: {
     fontSize: 10,
-    color: '#dc2626',
     fontWeight: '600',
+    color: '#b91c1c',
   },
-  updateBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#1a5c38',
-    borderRadius: 14,
-    paddingVertical: 16,
-    marginTop: 8,
+  assignRow: {
+    marginTop: 6,
   },
-  updateBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
+  bottomSpacer: {
+    height: 20,
   },
 });

@@ -1,202 +1,255 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  StatusBar,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Screen } from '../../components/ui/Screen';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 import { colors } from '../../theme/colors';
-import {
-  Leaf,
-  Sparkles,
-  Award,
-  Calendar,
-  AlertTriangle,
-  ArrowRight,
-  ShieldCheck,
-} from 'lucide-react-native';
+import { Leaf, Sparkles, Calendar, AlertTriangle, ArrowRight, ShieldCheck } from 'lucide-react-native';
+
+const CITIZEN_PRIMARY = colors.roles.citizen.primary; // #d97706
+const CITIZEN_LIGHT = colors.roles.citizen.light; // #fef3c7
 
 export default function CitizenWelcomeScreen() {
   const router = useRouter();
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a5c38" />
+  const setupSteps = [
+    {
+      num: '1',
+      title: 'Segregate waste at home',
+      desc: 'Separate wet, dry, sanitary and MLP streams before disposal.',
+      icon: Leaf,
+      color: '#10b981',
+      light: '#ecfdf5',
+    },
+    {
+      num: '2',
+      title: 'Use collection schedule',
+      desc: 'Put your bin out before the pickup window each ward day.',
+      icon: Calendar,
+      color: '#2563eb',
+      light: '#eff6ff',
+    },
+    {
+      num: '3',
+      title: 'Report issues & earn points',
+      desc: 'Snap full bins and earn Green Eco-Points redeemable locally.',
+      icon: AlertTriangle,
+      color: CITIZEN_PRIMARY,
+      light: CITIZEN_LIGHT,
+    },
+  ];
 
-      {/* Hero Banner */}
-      <View style={styles.heroBanner}>
-        <View style={styles.logoCircle}>
-          <Leaf size={32} color="#ffffff" />
+  return (
+    <Screen
+      title="Welcome to GRAM-CIRCULAR"
+      subtitle="Your village, cleaner every day"
+      showBottomNav={false}
+    >
+      {/* Hero Card */}
+      <Card padding={20} style={styles.heroCard}>
+        <View style={styles.logoRow}>
+          <View style={styles.logoCircle}>
+            <Leaf size={30} color="#ffffff" />
+          </View>
+          <View style={styles.brandMeta}>
+            <Text style={styles.brandTitle}>GRAM-CIRCULAR</Text>
+            <Text style={styles.brandSub}>Swachh Village Initiative</Text>
+          </View>
         </View>
-        <Text style={styles.brandTitle}>GRAM-CIRCULAR</Text>
-        <Text style={styles.heroHeading}>A Cleaner Village Starts with You</Text>
-        <Text style={styles.heroSub}>Together for a greener tomorrow in Shanti Nagar</Text>
+        <Text style={styles.welcomeTitle}>Welcome, Citizen!</Text>
+        <Text style={styles.welcomeSub}>
+          You are now connected to Shanti Nagar's waste management system.
+          Segregate waste, report issues, and earn Green Eco-Points.
+        </Text>
+        <View style={styles.heroDivider} />
+        <Text style={styles.heroRole}>
+          <ShieldCheck size={14} color={CITIZEN_PRIMARY} />{' '}
+          Role: Village Citizen • Shanti Nagar Ward 3
+        </Text>
+      </Card>
+
+      {/* Quick Setup */}
+      <SectionHeader title="Quick Setup" subtitle="Get started in three steps" />
+      <View style={styles.stepsRow}>
+        {setupSteps.map((step) => {
+          const IconComp = step.icon;
+          return (
+            <View key={step.num} style={styles.stepCard}>
+              <View style={[styles.stepIcon, { backgroundColor: step.light }]}>
+                <IconComp size={20} color={step.color} />
+              </View>
+              <View style={styles.stepMeta}>
+                <Text style={styles.stepNum}>{step.num}</Text>
+                <Text style={styles.stepTitle}>{step.title}</Text>
+                <Text style={styles.stepDesc}>{step.desc}</Text>
+              </View>
+            </View>
+          );
+        })}
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionHeader}>How You Can Make an Impact</Text>
-
-        <View style={styles.featureCard}>
-          <View style={[styles.iconBox, { backgroundColor: '#e8f5e9' }]}>
-            <Leaf size={22} color="#1a5c38" />
+      {/* Role Explanation */}
+      <Card padding={14} style={styles.roleCard}>
+        <View style={styles.roleHeader}>
+          <View style={styles.roleIcon}>
+            <ShieldCheck size={18} color={CITIZEN_PRIMARY} />
           </View>
-          <View style={styles.featureMeta}>
-            <Text style={styles.featureTitle}>Segregate at Source</Text>
-            <Text style={styles.featureDesc}>
-              Separate dry MLP plastic pouches from wet organic waste so it can be recycled.
-            </Text>
-          </View>
+          <Text style={styles.roleTitle}>Your Role: Village Citizen</Text>
         </View>
+        <Text style={styles.roleSub}>
+          As a resident of Shanti Nagar, you can log bin reports, track collection days,
+          redeem Green Eco-Points, and view village progress — all in English and Tamil.
+        </Text>
+        <StatusBadge variant="primary" style={styles.roleBadge}>
+          Village Citizen • Amber Theme
+        </StatusBadge>
+      </Card>
 
-        <View style={styles.featureCard}>
-          <View style={[styles.iconBox, { backgroundColor: '#eff6ff' }]}>
-            <Calendar size={22} color="#2563eb" />
-          </View>
-          <View style={styles.featureMeta}>
-            <Text style={styles.featureTitle}>Doorstep Collection Timetable</Text>
-            <Text style={styles.featureDesc}>
-              Know exactly which stream is picked up each morning in your ward.
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.featureCard}>
-          <View style={[styles.iconBox, { backgroundColor: '#fff7ed' }]}>
-            <AlertTriangle size={22} color="#ea580c" />
-          </View>
-          <View style={styles.featureMeta}>
-            <Text style={styles.featureTitle}>Report Full or Overflowing Bins</Text>
-            <Text style={styles.featureDesc}>
-              Snap a quick photo with GPS. Our collection truck is routed directly.
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.featureCard}>
-          <View style={[styles.iconBox, { backgroundColor: '#fef3c7' }]}>
-            <Award size={22} color="#d97706" />
-          </View>
-          <View style={styles.featureMeta}>
-            <Text style={styles.featureTitle}>Earn Green Eco-Points</Text>
-            <Text style={styles.featureDesc}>
-              Get rewarded with points redeemable for Panchayat discounts and compost bags.
-            </Text>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={styles.startBtn}
-          onPress={() => router.push('/(citizen)/home')}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.startBtnText}>Get Started</Text>
-          <ArrowRight size={18} color="#ffffff" />
-        </TouchableOpacity>
-
-        <View style={{ height: 30 }} />
-      </ScrollView>
-    </SafeAreaView>
+      <TouchableOpacity
+        style={styles.startBtn}
+        onPress={() => router.push('/(citizen)/home')}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.startBtnText}>Get Started</Text>
+        <ArrowRight size={18} color="#ffffff" />
+      </TouchableOpacity>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#1a5c38',
-  },
-  heroBanner: {
-    backgroundColor: '#1a5c38',
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 32,
+  heroCard: {},
+  logoRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
+    marginBottom: 14,
   },
   logoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: CITIZEN_PRIMARY,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
+  brandMeta: {},
   brandTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#a7f3d0',
-    letterSpacing: 1,
-  },
-  heroHeading: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#ffffff',
-    textAlign: 'center',
-    marginTop: 6,
-  },
-  heroSub: {
-    fontSize: 13,
-    color: '#d1fae5',
-    textAlign: 'center',
-    marginTop: 6,
-  },
-  content: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    padding: 18,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-  },
-  sectionHeader: {
     fontSize: 15,
     fontWeight: '800',
     color: colors.textPrimary,
+    letterSpacing: 0.5,
+  },
+  brandSub: {
+    fontSize: 10,
+    color: colors.textMuted,
+    marginTop: 1,
+  },
+  welcomeTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginBottom: 6,
+  },
+  welcomeSub: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 19,
     marginBottom: 14,
   },
-  featureCard: {
+  heroDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 12,
+  },
+  heroRole: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    gap: 6,
+    fontSize: 11,
+    fontWeight: '700',
+    color: CITIZEN_PRIMARY,
+  },
+  stepsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  stepCard: {
+    flex: 1,
     backgroundColor: '#ffffff',
     borderRadius: 14,
-    padding: 14,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 10,
-    gap: 12,
+    padding: 12,
+    gap: 10,
   },
-  iconBox: {
-    width: 44,
-    height: 44,
+  stepIcon: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  featureMeta: {
-    flex: 1,
+  stepMeta: {},
+  stepNum: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.textMuted,
   },
-  featureTitle: {
-    fontSize: 14,
+  stepTitle: {
+    fontSize: 13,
     fontWeight: '700',
     color: colors.textPrimary,
+    marginTop: 2,
   },
-  featureDesc: {
-    fontSize: 11,
+  stepDesc: {
+    fontSize: 10,
     color: colors.textSecondary,
     marginTop: 2,
-    lineHeight: 16,
+    lineHeight: 14,
+  },
+  roleCard: {},
+  roleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  roleIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: CITIZEN_LIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roleTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  roleSub: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    lineHeight: 17,
+    marginBottom: 10,
+  },
+  roleBadge: {
+    alignSelf: 'flex-start',
   },
   startBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#1a5c38',
+    backgroundColor: CITIZEN_PRIMARY,
     borderRadius: 14,
     paddingVertical: 16,
-    marginTop: 16,
+    minHeight: 52,
   },
   startBtnText: {
     color: '#ffffff',

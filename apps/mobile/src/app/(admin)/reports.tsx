@@ -1,18 +1,12 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { HeaderBar } from '../../components/common/HeaderBar';
+import { OfflineBanner } from '../../components/common/OfflineBanner';
 import { BottomNav } from '../../components/common/BottomNav';
-import { ADMIN_STATS } from '../../lib/mock-data';
+import { Card, Button, StatusBadge, SectionHeader, EmptyState } from '../../components/ui';
 import { colors } from '../../theme/colors';
 import {
-  ArrowUpRight,
   Download,
   Calendar,
   FileSpreadsheet,
@@ -20,58 +14,107 @@ import {
   ShieldCheck,
   Truck,
   Leaf,
-  IndianRupee,
+  Clock,
+  TrendingUp,
 } from 'lucide-react-native';
 
-const REPORT_SECTIONS = [
+interface ReportTemplate {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ComponentType<any>;
+  color: string;
+  frequency: string;
+  lastGenerated: string;
+  size: string;
+  format: string;
+}
+
+const REPORT_TEMPLATES: ReportTemplate[] = [
   {
-    id: 'rep-col',
-    title: 'Collection Report',
-    desc: 'Daily weight logs & collection point breakdown',
-    size: '1.2 MB',
-    format: 'PDF / CSV',
+    id: 'daily-collection',
+    title: 'Daily Collection Report',
+    description: 'Daily weight logs & collection point breakdown',
     icon: FileSpreadsheet,
     color: '#2563eb',
+    frequency: 'Daily',
+    lastGenerated: '19 Oct 2026, 6:00 AM',
+    size: '1.2 MB',
+    format: 'PDF / CSV',
   },
   {
-    id: 'rep-mlp',
-    title: 'MLP Waste Report',
-    desc: 'Multi-layer plastic traceability & segregation purity',
-    size: '860 KB',
-    format: 'PDF',
+    id: 'mass-balance',
+    title: 'Mass-Balance Ledger',
+    description: 'Waste inflow vs outflow reconciliation ledger',
     icon: Leaf,
     color: '#1a5c38',
-  },
-  {
-    id: 'rep-route',
-    title: 'Route & Fuel Efficiency',
-    desc: 'Vehicle kilometers, stops covered & turnaround times',
-    size: '640 KB',
+    frequency: 'Weekly',
+    lastGenerated: '18 Oct 2026, 9:30 AM',
+    size: '860 KB',
     format: 'PDF',
-    icon: Truck,
-    color: '#ea580c',
   },
   {
-    id: 'rep-comp',
-    title: 'Compliance & Audit Report',
-    desc: 'CPCB EPR guidelines & Gram Panchayat audit certificate',
+    id: 'mrf-inventory',
+    title: 'MRF Inventory Report',
+    description: 'Material recovery facility stock & zone utilization',
+    icon: ShieldCheck,
+    color: '#ea580c',
+    frequency: 'Weekly',
+    lastGenerated: '17 Oct 2026, 4:15 PM',
     size: '2.4 MB',
     format: 'Signed PDF',
-    icon: ShieldCheck,
+  },
+  {
+    id: 'route-efficiency',
+    title: 'Route Efficiency Report',
+    description: 'Vehicle kilometers, stops covered & turnaround times',
+    icon: Truck,
     color: '#7c3aed',
+    frequency: 'Weekly',
+    lastGenerated: '16 Oct 2026, 11:00 AM',
+    size: '640 KB',
+    format: 'PDF',
+  },
+  {
+    id: 'processor-handover',
+    title: 'Processor Handover Report',
+    description: 'Dispatch confirmations & processor receipt verification',
+    icon: TrendingUp,
+    color: '#d97706',
+    frequency: 'Monthly',
+    lastGenerated: '01 Oct 2026, 5:00 PM',
+    size: '1.8 MB',
+    format: 'PDF / Excel',
+  },
+  {
+    id: 'anomaly-register',
+    title: 'Anomaly Register',
+    description: 'Flagged collections, contamination & irregularities',
+    icon: Clock,
+    color: '#ef4444',
+    frequency: 'Daily',
+    lastGenerated: '19 Oct 2026, 8:00 AM',
+    size: '420 KB',
+    format: 'PDF',
   },
 ];
 
 export default function AdminReportsScreen() {
+  const router = useRouter();
   const [period, setPeriod] = useState<'7days' | 'month' | 'quarter'>('7days');
 
-  const handleDownload = (name: string) => {
-    Alert.alert('Download Report', `${name} generated successfully. Saved to downloads.`);
+  const handleDownload = (report: ReportTemplate) => {
+    Alert.alert(
+      'Download Report',
+      `${report.title} has been generated and saved to Downloads (${report.size}).`,
+      [{ text: 'OK', style: 'default' }],
+    );
   };
 
   return (
     <View style={styles.screen}>
-      <HeaderBar title="Reports & Analytics" subtitle="Environmental & Economic Audits" showBack />
+      <HeaderBar title="Reports & Compliance" subtitle="Environmental & Economic Audits" showBack />
+      <OfflineBanner />
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Period Selector */}
@@ -79,94 +122,67 @@ export default function AdminReportsScreen() {
           <Calendar size={16} color={colors.textSecondary} />
           <Text style={styles.periodLabel}>Reporting Period:</Text>
           <View style={styles.periodPills}>
-            <TouchableOpacity
-              style={[styles.periodPill, period === '7days' && styles.activePill]}
+            <Button
+              title="Last 7 Days"
+              variant={period === '7days' ? 'primary' : 'outline'}
               onPress={() => setPeriod('7days')}
-            >
-              <Text style={[styles.periodText, period === '7days' && styles.activePeriodText]}>
-                Last 7 Days
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.periodPill, period === 'month' && styles.activePill]}
+              style={{ paddingHorizontal: 10, paddingVertical: 6, minHeight: 34 }}
+            />
+            <Button
+              title="This Month"
+              variant={period === 'month' ? 'primary' : 'outline'}
               onPress={() => setPeriod('month')}
-            >
-              <Text style={[styles.periodText, period === 'month' && styles.activePeriodText]}>
-                This Month
-              </Text>
-            </TouchableOpacity>
+              style={{ paddingHorizontal: 10, paddingVertical: 6, minHeight: 34 }}
+            />
+            <Button
+              title="Quarter"
+              variant={period === 'quarter' ? 'primary' : 'outline'}
+              onPress={() => setPeriod('quarter')}
+              style={{ paddingHorizontal: 10, paddingVertical: 6, minHeight: 34 }}
+            />
           </View>
         </View>
 
-        {/* 4 KPI Cards Grid */}
-        <View style={styles.grid}>
-          <View style={styles.gridCard}>
-            <Text style={styles.cardTitle}>Total Waste</Text>
-            <Text style={styles.cardValue}>{ADMIN_STATS.totalWasteKg.toLocaleString()} kg</Text>
-            <View style={styles.trendRow}>
-              <ArrowUpRight size={12} color="#15803d" />
-              <Text style={styles.trendText}>+{ADMIN_STATS.totalWasteGrowth}%</Text>
-            </View>
-          </View>
+        <SectionHeader
+          title="Compliance & Operational Reports"
+          subtitle="Download certified reports for audit & compliance"
+        />
 
-          <View style={[styles.gridCard, { backgroundColor: '#f0fdf4' }]}>
-            <Text style={[styles.cardTitle, { color: '#166534' }]}>MLP Waste</Text>
-            <Text style={[styles.cardValue, { color: '#14532d' }]}>{ADMIN_STATS.mlpWasteKg} kg</Text>
-            <View style={styles.trendRow}>
-              <ArrowUpRight size={12} color="#15803d" />
-              <Text style={styles.trendText}>+{ADMIN_STATS.mlpWasteGrowth}%</Text>
-            </View>
-          </View>
-
-          <View style={styles.gridCard}>
-            <Text style={styles.cardTitle}>Revenue Generated</Text>
-            <Text style={styles.cardValue}>₹{ADMIN_STATS.revenueInr.toLocaleString()}</Text>
-            <View style={styles.trendRow}>
-              <ArrowUpRight size={12} color="#15803d" />
-              <Text style={styles.trendText}>+{ADMIN_STATS.revenueGrowth}%</Text>
-            </View>
-          </View>
-
-          <View style={[styles.gridCard, { backgroundColor: '#f0fdfa' }]}>
-            <Text style={[styles.cardTitle, { color: '#115e59' }]}>CO₂ Avoided</Text>
-            <Text style={[styles.cardValue, { color: '#134e4a' }]}>{ADMIN_STATS.co2AvoidedKg} kg</Text>
-            <View style={styles.trendRow}>
-              <ArrowUpRight size={12} color="#15803d" />
-              <Text style={styles.trendText}>+{ADMIN_STATS.co2AvoidedGrowth}%</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Available Reports List */}
-        <Text style={styles.sectionTitle}>Compliance & Operational Reports</Text>
-
-        {REPORT_SECTIONS.map((item) => {
-          const IconComp = item.icon;
-
+        {REPORT_TEMPLATES.map((report) => {
+          const IconComp = report.icon;
           return (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.reportCard}
-              onPress={() => handleDownload(item.title)}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.reportIconBox, { backgroundColor: `${item.color}15` }]}>
-                <IconComp size={22} color={item.color} />
-              </View>
-
-              <View style={styles.reportMeta}>
-                <Text style={styles.reportTitle}>{item.title}</Text>
-                <Text style={styles.reportDesc}>{item.desc}</Text>
-                <View style={styles.reportSubRow}>
-                  <Text style={styles.reportFormat}>{item.format}</Text>
-                  <Text style={styles.reportSize}>• {item.size}</Text>
+            <Card key={report.id} padding={14} shadow="md" style={{ marginBottom: 10 }}>
+              <View style={styles.reportHeader}>
+                <View style={[styles.reportIconBox, { backgroundColor: `${report.color}15` }]}>
+                  <IconComp size={22} color={report.color} />
+                </View>
+                <View style={styles.reportMeta}>
+                  <Text style={styles.reportTitle}>{report.title}</Text>
+                  <Text style={styles.reportDesc}>{report.description}</Text>
+                  <View style={styles.reportFooter}>
+                    <StatusBadge variant="primary" small>
+                      {report.frequency}
+                    </StatusBadge>
+                    <Text style={styles.reportLastGen}>
+                      Last: {report.lastGenerated}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.reportActions}>
+                  <View style={styles.fileInfo}>
+                    <Text style={styles.fileSize}>{report.size}</Text>
+                    <Text style={styles.fileFormat}>{report.format}</Text>
+                  </View>
+                  <Button
+                    title="Download"
+                    variant="outline"
+                    style={{ minHeight: 38, paddingHorizontal: 12 }}
+                    onPress={() => handleDownload(report)}
+                    leftIcon={<Download size={14} color={colors.primary} />}
+                  />
                 </View>
               </View>
-
-              <View style={styles.downloadCircle}>
-                <Download size={16} color={colors.primary} />
-              </View>
-            </TouchableOpacity>
+            </Card>
           );
         })}
 
@@ -208,74 +224,10 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
     gap: 6,
   },
-  periodPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: '#f1f5f9',
-  },
-  activePill: {
-    backgroundColor: '#1a5c38',
-  },
-  periodText: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  activePeriodText: {
-    color: '#ffffff',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 18,
-  },
-  gridCard: {
-    width: '48%',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cardTitle: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  cardValue: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginTop: 4,
-  },
-  trendRow: {
+  reportHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    marginTop: 4,
-  },
-  trendText: {
-    fontSize: 10,
-    color: '#15803d',
-    fontWeight: '700',
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 12,
-  },
-  reportCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 10,
+    justifyContent: 'space-between',
   },
   reportIconBox: {
     width: 44,
@@ -289,7 +241,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   reportTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.textPrimary,
   },
@@ -298,28 +250,30 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  reportSubRow: {
+  reportFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
-    gap: 4,
+    gap: 10,
+    marginTop: 8,
   },
-  reportFormat: {
-    fontSize: 10,
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  reportSize: {
+  reportLastGen: {
     fontSize: 10,
     color: colors.textMuted,
   },
-  downloadCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#e8f5e9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
+  reportActions: {
+    alignItems: 'flex-end',
+    gap: 10,
+  },
+  fileInfo: {
+    alignItems: 'flex-end',
+  },
+  fileSize: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  fileFormat: {
+    fontSize: 10,
+    color: colors.textMuted,
   },
 });

@@ -1,231 +1,235 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
-import { HeaderBar } from '../../components/common/HeaderBar';
-import { OfflineBanner } from '../../components/common/OfflineBanner';
-import { BottomNav } from '../../components/common/BottomNav';
+import { Screen } from '../../components/ui/Screen';
+import { Card } from '../../components/ui/Card';
+import { StatCard } from '../../components/ui/StatCard';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { Button } from '../../components/ui/Button';
 import { WORKER_ROUTE } from '../../lib/mock-data';
 import { colors } from '../../theme/colors';
 import {
   Truck,
-  Navigation,
-  CheckCircle2,
-  Clock,
-  Play,
   Scale,
   QrCode,
   RefreshCw,
+  Play,
   ChevronRight,
   MapPin,
+  Activity,
+  Target,
 } from 'lucide-react-native';
 
 export default function WorkerDashboard() {
   const router = useRouter();
 
+  const completedStops = WORKER_ROUTE.completedStops;
+  const totalStops = WORKER_ROUTE.totalStops;
+  const progressPercent = Math.round((completedStops / totalStops) * 100);
+  const collectedToday = 70;
+  const dailyTarget = 120;
+
+  const quickActions = [
+    {
+      id: 'weigh',
+      title: 'Weigh Waste',
+      sub: 'Bluetooth Scale',
+      icon: Scale,
+      color: '#2563eb',
+      light: '#eff6ff',
+      route: '/(worker)/weighing',
+    },
+    {
+      id: 'bags',
+      "title": "Today's Bags",
+      sub: '5 Collections',
+      icon: QrCode,
+      color: '#15803d',
+      light: '#f0fdf4',
+      route: '/(worker)/my-collections',
+    },
+    {
+      id: 'outbox',
+      title: 'Offline Outbox',
+      sub: 'SQLite Queue',
+      icon: RefreshCw,
+      color: '#ea580c',
+      light: '#fff7ed',
+      route: '/(worker)/offline-mode',
+    },
+  ];
+
   return (
-    <View style={styles.screen}>
-      <HeaderBar
-        title="Good Morning, Ramesh!"
-        subtitle="Vehicle 1 • Shanti Nagar Route"
+    <Screen
+      title="Good Morning, Ramesh!"
+      subtitle="Vehicle 1 • Shanti Nagar Route"
+      showOfflineBanner
+      showBottomNav
+    >
+      {/* Stat Cards Row */}
+      <View style={styles.statsRow}>
+        <StatCard
+          value={`${collectedToday} kg`}
+          label="Collected Today"
+          subtext="5 stops completed"
+          iconBg="#eff6ff"
+          iconColor="#2563eb"
+          trend="+12%"
+          trendPositive
+        >
+          <Truck size={18} />
+        </StatCard>
+        <StatCard
+          value={`${dailyTarget} kg`}
+          label="Daily Target"
+          subtext="Vehicle 1 capacity"
+          iconBg="#f0fdf4"
+          iconColor="#15803d"
+          trend={`${dailyTarget - collectedToday} kg remaining`}
+          trendPositive
+        >
+          <Target size={18} />
+        </StatCard>
+        <StatCard
+          value="58%"
+          label="Progress"
+          subtext="Route completion"
+          iconBg="#f1f5f9"
+          iconColor="#475569"
+          trend="On track"
+          trendPositive
+        >
+          <Activity size={18} />
+        </StatCard>
+      </View>
+
+      {/* Today's Route Card */}
+      <Card style={styles.routeCard} padding={16}>
+        <View style={styles.routeHeaderRow}>
+          <View>
+            <Text style={styles.routeTitle}>Today's Route</Text>
+            <Text style={styles.routeSubtitle}>
+              {totalStops} Collection Points • {WORKER_ROUTE.totalDistanceKm} km
+            </Text>
+          </View>
+          <StatusBadge variant="default">{String(completedStops) + '/' + String(totalStops)}</StatusBadge>
+        </View>
+
+        <View style={styles.progressBarContainer}>
+          <View style={styles.progressBarTrack}>
+            <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+          </View>
+          <Text style={styles.progressText}>{progressPercent}% Complete</Text>
+        </View>
+
+        <Button
+          title={`Continue Route • Stop ${completedStops + 1}`}
+          leftIcon={<Play size={16} color="#ffffff" />}
+          fullWidth
+          onPress={() => router.push('/(worker)/stop-detail')}
+        />
+      </Card>
+
+      {/* Quick Actions */}
+      <SectionHeader
+        title="Quick Actions"
+        subtitle="Start your next collection step"
       />
-      <OfflineBanner />
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Today's Route Banner Card */}
-        <View style={styles.routeHeaderCard}>
-          <View style={styles.routeTopRow}>
-            <View>
-              <Text style={styles.routeTitle}>Today's Route</Text>
-              <Text style={styles.routeSubtitle}>
-                {WORKER_ROUTE.totalStops} Collection Points • {WORKER_ROUTE.totalDistanceKm} km
-              </Text>
-            </View>
-            <View style={styles.progressBadge}>
-              <Text style={styles.progressText}>
-                {WORKER_ROUTE.completedStops}/{WORKER_ROUTE.totalStops}
-              </Text>
-            </View>
-          </View>
-
-          {/* Progress Bar */}
-          <View style={styles.progressBarBg}>
-            <View
-              style={[
-                styles.progressBarFill,
-                {
-                  width: `${(WORKER_ROUTE.completedStops / WORKER_ROUTE.totalStops) * 100}%`,
-                },
-              ]}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={styles.startRouteBtn}
-            onPress={() => router.push('/(worker)/stop-detail')}
-            activeOpacity={0.85}
-          >
-            <Play size={16} color="#ffffff" fill="#ffffff" />
-            <Text style={styles.startRouteText}>Continue Route • Stop 3</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Quick Action Buttons */}
-        <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => router.push('/(worker)/weighing')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.actionIconBox, { backgroundColor: '#eff6ff' }]}>
-              <Scale size={20} color="#2563eb" />
-            </View>
-            <Text style={styles.actionTitle}>Weigh Waste</Text>
-            <Text style={styles.actionSub}>Bluetooth Scale</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => router.push('/(worker)/my-collections')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.actionIconBox, { backgroundColor: '#f0fdf4' }]}>
-              <QrCode size={20} color="#15803d" />
-            </View>
-            <Text style={styles.actionTitle}>Today's Bags</Text>
-            <Text style={styles.actionSub}>5 Collections</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => router.push('/(worker)/offline-mode')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.actionIconBox, { backgroundColor: '#fff7ed' }]}>
-              <RefreshCw size={20} color="#ea580c" />
-            </View>
-            <Text style={styles.actionTitle}>Offline Outbox</Text>
-            <Text style={styles.actionSub}>SQLite Queue</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Stops Sequence */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Assigned Stops</Text>
-          <Text style={styles.sectionSub}>Next: CP-03 Gandhi Street</Text>
-        </View>
-
-        {WORKER_ROUTE.stops.map((stop) => {
-          const isDone = stop.status === 'Completed';
-          const isInProgress = stop.status === 'In Progress';
-
+      <View style={styles.actionsRow}>
+        {quickActions.map((action) => {
+          const IconComp = action.icon;
           return (
-            <TouchableOpacity
-              key={stop.id}
-              style={[
-                styles.stopCard,
-                isInProgress && styles.stopCardActive,
-              ]}
-              onPress={() => router.push('/(worker)/stop-detail')}
-              activeOpacity={0.8}
+            <Card
+              key={action.id}
+              style={[styles.actionCard, { backgroundColor: action.light || '#ffffff' }] as unknown as ViewStyle}
+              padding={14}
             >
-              <View style={styles.stopCardLeft}>
-                <View
-                  style={[
-                    styles.stopBadge,
-                    isDone
-                      ? styles.badgeDone
-                      : isInProgress
-                      ? styles.badgeActive
-                      : styles.badgePending,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.stopCodeText,
-                      isDone
-                        ? { color: '#15803d' }
-                        : isInProgress
-                        ? { color: '#2563eb' }
-                        : { color: '#64748b' },
-                    ]}
-                  >
-                    {stop.code}
-                  </Text>
-                </View>
-
-                <View style={styles.stopTextMeta}>
-                  <Text style={styles.stopName}>{stop.name}</Text>
-                  <Text style={styles.stopWard}>
-                    {stop.ward} • {stop.distanceKm} km
-                  </Text>
-                </View>
+              <TouchableOpacity
+                style={[styles.actionIconBox, { borderColor: action.color }]}
+                onPress={() => router.push(action.route as any)}
+                activeOpacity={0.8}
+              >
+                <IconComp size={20} color={action.color} />
+              </TouchableOpacity>
+              <View style={styles.actionMeta}>
+                <Text style={styles.actionTitle}>{action.title}</Text>
+                <Text style={styles.actionSub}>{action.sub}</Text>
               </View>
-
-              <View style={styles.stopCardRight}>
-                <Text style={styles.stopKg}>{stop.weightKg} kg</Text>
-                <View
-                  style={[
-                    styles.statusChip,
-                    isDone
-                      ? styles.statusDone
-                      : isInProgress
-                      ? styles.statusProgress
-                      : styles.statusPending,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.statusChipText,
-                      isDone
-                        ? { color: '#15803d' }
-                        : isInProgress
-                        ? { color: '#2563eb' }
-                        : { color: '#64748b' },
-                    ]}
-                  >
-                    {stop.status}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+            </Card>
           );
         })}
+      </View>
 
-        <View style={{ height: 24 }} />
-      </ScrollView>
+      {/* Assigned Stops */}
+      <SectionHeader
+        title="Assigned Stops"
+        subtitle={`Next: ${WORKER_ROUTE.stops.find((s) => s.status === 'In Progress')?.name || 'All stops assigned'}`}
+      />
 
-      <BottomNav />
-    </View>
+      {WORKER_ROUTE.stops.map((stop) => {
+        const isDone = stop.status === 'Completed';
+        const isInProgress = stop.status === 'In Progress';
+
+        return (
+          <Card key={stop.id} style={styles.stopCard} padding={14}>
+            <View style={styles.stopRow}>
+              <View
+                style={[
+                  styles.stopBadge,
+                  isDone ? styles.badgeDone : isInProgress ? styles.badgeActive : styles.badgePending,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.stopCodeText,
+                    { color: isDone ? '#15803d' : isInProgress ? '#2563eb' : '#64748b' },
+                  ]}
+                >
+                  {stop.code}
+                </Text>
+              </View>
+              <View style={styles.stopMeta}>
+                <Text style={styles.stopName}>{stop.name}</Text>
+                <Text style={styles.stopWard}>
+                  {stop.ward} • {stop.distanceKm} km
+                </Text>
+              </View>
+              <View style={styles.stopRight}>
+                <Text style={styles.stopKg}>{stop.weightKg} kg</Text>
+                <StatusBadge
+                  variant={isDone ? 'success' : isInProgress ? 'primary' : 'default'}
+                  small
+                  style={styles.statusChip}
+                >
+                  {stop.status}
+                </StatusBadge>
+              </View>
+            </View>
+          </Card>
+        );
+      })}
+
+      <View style={styles.bottomSpacer} />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.surface,
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
   },
-  scroll: {
-    flex: 1,
-    padding: 16,
+  routeCard: {
+    marginBottom: 16,
   },
-  routeHeaderCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 14,
-  },
-  routeTopRow: {
+  routeHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: 14,
   },
   routeTitle: {
     fontSize: 18,
@@ -237,22 +241,13 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  progressBadge: {
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+  progressBarContainer: {
+    gap: 8,
   },
-  progressText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#2563eb',
-  },
-  progressBarBg: {
+  progressBarTrack: {
     height: 8,
     backgroundColor: '#e2e8f0',
     borderRadius: 4,
-    marginVertical: 14,
     overflow: 'hidden',
   },
   progressBarFill: {
@@ -260,19 +255,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563eb',
     borderRadius: 4,
   },
-  startRouteBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#2563eb',
-    borderRadius: 12,
-    paddingVertical: 12,
-  },
-  startRouteText: {
-    color: '#ffffff',
-    fontSize: 13,
+  progressText: {
+    fontSize: 12,
     fontWeight: '700',
+    color: '#2563eb',
+    textAlign: 'right',
   },
   actionsRow: {
     flexDirection: 'row',
@@ -281,67 +268,36 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   actionIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
+  },
+  actionMeta: {
+    gap: 2,
   },
   actionTitle: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '700',
     color: colors.textPrimary,
   },
   actionSub: {
-    fontSize: 9,
+    fontSize: 10,
     color: colors.textSecondary,
-    marginTop: 1,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  sectionSub: {
-    fontSize: 11,
-    color: '#2563eb',
-    fontWeight: '600',
   },
   stopCard: {
+    marginBottom: 10,
+  },
+  stopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 10,
-  },
-  stopCardActive: {
-    borderColor: '#3b82f6',
-    borderWidth: 1.5,
-    backgroundColor: '#f8faff',
-  },
-  stopCardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
   },
   stopBadge: {
     width: 44,
@@ -349,7 +305,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 12,
   },
   badgeDone: {
     backgroundColor: '#ecfdf5',
@@ -364,11 +320,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
-  stopTextMeta: {
+  stopMeta: {
     flex: 1,
   },
   stopName: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.textPrimary,
   },
@@ -377,31 +333,20 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  stopCardRight: {
+  stopRight: {
     alignItems: 'flex-end',
     gap: 4,
   },
   stopKg: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
     color: colors.textPrimary,
   },
   statusChip: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    minWidth: 70,
+    alignItems: 'center',
   },
-  statusDone: {
-    backgroundColor: '#ecfdf5',
-  },
-  statusProgress: {
-    backgroundColor: '#eff6ff',
-  },
-  statusPending: {
-    backgroundColor: '#f1f5f9',
-  },
-  statusChipText: {
-    fontSize: 10,
-    fontWeight: '700',
+  bottomSpacer: {
+    height: 20,
   },
 });

@@ -1,170 +1,298 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
+  Dimensions,
   ScrollView,
-  TouchableOpacity,
   StyleSheet,
-  Alert,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { HeaderBar } from '../../components/common/HeaderBar';
 import { BottomNav } from '../../components/common/BottomNav';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 import { colors } from '../../theme/colors';
 import {
-  Calendar as CalendarIcon,
-  Truck,
-  MapPin,
-  Layers,
-  CheckCircle2,
-  ChevronLeft,
+  Calendar,
   ChevronRight,
-  ShieldCheck,
+  Image,
+  ImageOff,
+  Layers,
+  MapPin,
+  Truck,
 } from 'lucide-react-native';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const PRIMARY = colors.roles.buyer.primary; // #7c3aed
+const PRIMARY_LIGHT = colors.roles.buyer.light; // #f5f3ff
+
+type BadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'info' | 'primary';
+
+interface Photo {
+  id: string;
+  label: string;
+}
+
+interface TimelineEvent {
+  id: string;
+  time: string;
+  status: string;
+  location: string;
+  note?: string;
+  variant: BadgeVariant;
+}
+
+interface BatchDetail {
+  id: string;
+  batchNumber: string;
+  wasteType: 'MLP' | 'HDPE' | 'LDPE' | 'PET';
+  originVillage: string;
+  collectionPoint: string;
+  collectionPointCode: string;
+  weightKg: number;
+  grade: 'A' | 'B' | 'C';
+  gradeLabel: string;
+  moisture: string;
+  condition: 'Clean' | 'Slightly Dirty' | 'Contaminated';
+  distanceKm: number;
+  pricePerKg: number;
+  photos: Photo[];
+  timeline: TimelineEvent[];
+}
+
+const BATCH: BatchDetail = {
+  id: 'b-buy-143',
+  batchNumber: 'MLP-2026-0143',
+  wasteType: 'MLP',
+  originVillage: 'Shanti Nagar',
+  collectionPoint: 'Gandhi Street Collection Point',
+  collectionPointCode: 'CP-03',
+  weightKg: 162,
+  grade: 'A',
+  gradeLabel: 'A Grade • Clean • Low Moisture',
+  moisture: '1.8% (Low)',
+  condition: 'Clean',
+  distanceKm: 50,
+  pricePerKg: 38,
+  photos: [
+    { id: 'p1', label: 'Load 1 • Gross weighbridge slip' },
+    { id: 'p2', label: 'Load 2 • Truck security seal' },
+    { id: 'p3', label: 'Load 3 • Material close-up' },
+    { id: 'p4', label: 'Load 4 • Collection point' },
+  ],
+  timeline: [
+    {
+      id: 't1',
+      time: '16 Oct, 10:24 AM',
+      status: 'Collected',
+      location: 'CP-03 Gandhi Street',
+      note: '162 kg collected from village collection point',
+      variant: 'success',
+    },
+    {
+      id: 't2',
+      time: '16 Oct, 11:05 AM',
+      status: 'Inspected',
+      location: 'Tidel MRF Facility',
+      note: 'Quality inspection passed — Grade A, 1.8% moisture',
+      variant: 'success',
+    },
+    {
+      id: 't3',
+      time: '16 Oct, 02:30 PM',
+      status: 'Stored',
+      location: 'Zone A (MLP)',
+      note: 'Stored in dedicated MLP storage zone',
+      variant: 'info',
+    },
+    {
+      id: 't4',
+      time: '17 Oct, 09:00 AM',
+      status: 'Ready for Dispatch',
+      location: 'Dispatch Bay 2',
+      note: 'Awaiting buyer pickup scheduling',
+      variant: 'warning',
+    },
+  ],
+};
+
+const GRADE_COLORS: Record<string, { bg: string; color: string }> = {
+  A: { bg: '#ecfdf5', color: '#15803d' },
+  B: { bg: '#fef3c7', color: '#b45309' },
+  C: { bg: '#fef2f2', color: '#b91c1c' },
+};
+
+const conditionColor = (condition: 'Clean' | 'Slightly Dirty' | 'Contaminated') => {
+  if (condition === 'Clean') return { bg: '#ecfdf5', color: '#15803d' };
+  if (condition === 'Slightly Dirty') return { bg: '#fef3c7', color: '#b45309' };
+  return { bg: '#fef2f2', color: '#b91c1c' };
+};
+
+const variantMap: Record<BadgeVariant, { bg: string; color: string }> = {
+  default: { bg: '#f1f5f9', color: '#475569' },
+  success: { bg: '#ecfdf5', color: '#15803d' },
+  warning: { bg: '#fef3c7', color: '#b45309' },
+  error: { bg: '#fef2f2', color: '#b91c1c' },
+  info: { bg: '#eff6ff', color: '#1d4ed8' },
+  primary: { bg: PRIMARY_LIGHT, color: PRIMARY },
+};
 
 export default function BuyerBatchDetailScreen() {
   const router = useRouter();
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
-  const [selectedDay, setSelectedDay] = useState(17);
-  const [vehicle, setVehicle] = useState('6 Ton Truck');
+  const photoWidth = (SCREEN_WIDTH - 32 - 10) / 2;
 
-  const daysInMonth = Array.from({ length: 31 }, (_, i) => i + 1);
-
-  const handleConfirmSchedule = () => {
-    Alert.alert(
-      'Pickup Scheduled',
-      `Logistics order confirmed for ${selectedDay} October 2026.\nVehicle: ${vehicle}\nBatch: MLP-2026-0143`,
-      [
-        {
-          text: 'Proceed to Receipt Confirmation',
-          onPress: () => router.push('/(buyer)/receipt-confirm'),
-        },
-        {
-          text: 'View Purchase History',
-          onPress: () => router.push('/(buyer)/history'),
-        },
-      ]
-    );
-  };
+  const gradeTheme = GRADE_COLORS[BATCH.grade];
+  const conditionTheme = conditionColor(BATCH.condition);
 
   return (
     <View style={styles.screen}>
-      <HeaderBar title="Schedule Pickup" subtitle="Batch MLP-2026-0143" showBack />
+      <HeaderBar
+        title="Batch Details"
+        subtitle={`${BATCH.batchNumber} • Ready for pickup`}
+        showBack
+      />
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Batch Info Card */}
-        <View style={styles.batchCard}>
-          <View style={styles.batchTop}>
-            <View style={styles.batchTag}>
-              <Layers size={18} color="#7c3aed" />
+        {/* Batch Information Card */}
+        <Card style={styles.infoCard}>
+          <View style={styles.infoTop}>
+            <View style={styles.infoBadge}>
+              <Layers size={18} color={PRIMARY} />
             </View>
-            <View style={styles.batchMeta}>
-              <Text style={styles.batchTitle}>Batch MLP-2026-0143</Text>
-              <Text style={styles.batchSub}>From: CP-03 Gandhi Street • Shanti Nagar</Text>
-            </View>
-            <Text style={styles.batchKg}>162.0 kg</Text>
-          </View>
-
-          <View style={styles.purityRow}>
-            <View style={styles.purityBadge}>
-              <Text style={styles.purityText}>A Grade • Low Moisture (1.8%)</Text>
-            </View>
-            <View style={styles.eprBadge}>
-              <ShieldCheck size={12} color="#15803d" />
-              <Text style={styles.eprText}>EPR Certified</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Calendar Picker (October 2026) */}
-        <View style={styles.calendarCard}>
-          <View style={styles.calendarHeader}>
-            <Text style={styles.monthTitle}>October 2026</Text>
-            <View style={styles.calNav}>
-              <TouchableOpacity style={styles.calNavBtn}>
-                <ChevronLeft size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.calNavBtn}>
-                <ChevronRight size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Weekday headers */}
-          <View style={styles.weekdaysRow}>
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((w, i) => (
-              <Text key={i} style={styles.weekdayText}>
-                {w}
+            <View style={styles.infoMeta}>
+              <Text style={styles.batchNumber}>{BATCH.batchNumber}</Text>
+              <Text style={styles.batchType}>
+                {BATCH.wasteType} • {BATCH.originVillage}
               </Text>
-            ))}
+            </View>
+            <Text style={styles.batchWeight}>{BATCH.weightKg} kg</Text>
           </View>
 
-          {/* Days Grid */}
-          <View style={styles.daysGrid}>
-            {/* Empty slots for month start on Thursday */}
-            <View style={styles.emptyDay} />
-            <View style={styles.emptyDay} />
-            <View style={styles.emptyDay} />
-            <View style={styles.emptyDay} />
+          <View style={styles.infoDivider} />
 
-            {daysInMonth.map((day) => {
-              const isSelected = selectedDay === day;
-              const isAvailable = day >= 16;
-
-              return (
-                <TouchableOpacity
-                  key={day}
-                  style={[
-                    styles.dayCell,
-                    isSelected && styles.dayCellSelected,
-                    !isAvailable && styles.dayCellDisabled,
-                  ]}
-                  onPress={() => isAvailable && setSelectedDay(day)}
-                  disabled={!isAvailable}
-                >
-                  <Text
-                    style={[
-                      styles.dayText,
-                      isSelected && styles.dayTextSelected,
-                      !isAvailable && styles.dayTextDisabled,
-                    ]}
-                  >
-                    {day}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+          <View style={styles.infoRow}>
+            <View style={styles.infoCol}>
+              <Text style={styles.infoLabel}>Origin Village</Text>
+              <Text style={styles.infoValue}>{BATCH.originVillage}</Text>
+            </View>
+            <View style={styles.infoCol}>
+              <Text style={styles.infoLabel}>Collection Point</Text>
+              <Text style={styles.infoValue}>
+                {BATCH.collectionPointCode} • {BATCH.collectionPoint}
+              </Text>
+            </View>
           </View>
-        </View>
 
-        {/* Vehicle Type Selection */}
-        <View style={styles.vehicleCard}>
-          <Text style={styles.sectionTitle}>Logistics Vehicle Type</Text>
+          <View style={styles.infoRow}>
+            <View style={styles.infoCol}>
+              <Text style={styles.infoLabel}>Quality Grade</Text>
+              <View style={[styles.gradeChip, { backgroundColor: gradeTheme.bg }]}>
+                <Text style={[styles.gradeChipText, { color: gradeTheme.color }]}>
+                  Grade {BATCH.grade}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.infoCol}>
+              <Text style={styles.infoLabel}>Moisture</Text>
+              <Text style={styles.infoValue}>{BATCH.moisture}</Text>
+            </View>
+          </View>
 
-          {['6 Ton Truck', '3.5 Ton Medium LCV'].map((v) => (
+          <View style={styles.infoRow}>
+            <View style={styles.infoCol}>
+              <Text style={styles.infoLabel}>Condition</Text>
+              <View style={[styles.conditionChip, { backgroundColor: conditionTheme.bg }]}>
+                <Text style={[styles.conditionChipText, { color: conditionTheme.color }]}>
+                  {BATCH.condition}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.infoCol}>
+              <Text style={styles.infoLabel}>Distance</Text>
+              <Text style={styles.infoValue}>{BATCH.distanceKm} km away</Text>
+            </View>
+          </View>
+        </Card>
+
+        {/* Quality Photos */}
+        <SectionHeader
+          title="Quality Photos"
+          subtitle="Tap a photo to enlarge"
+          onViewAll={() => {}}
+        />
+        <View style={styles.photosGrid}>
+          {BATCH.photos.map((photo) => (
             <TouchableOpacity
-              key={v}
-              style={[styles.vOption, vehicle === v && styles.vOptionSelected]}
-              onPress={() => setVehicle(v)}
+              key={photo.id}
+              style={[styles.photoBox, selectedPhoto === photo.id && styles.photoBoxSelected]}
+              onPress={() => setSelectedPhoto(selectedPhoto === photo.id ? null : photo.id)}
+              activeOpacity={0.8}
             >
-              <Truck size={18} color={vehicle === v ? '#7c3aed' : colors.textSecondary} />
-              <Text style={[styles.vText, vehicle === v && styles.vTextActive]}>{v}</Text>
-              {vehicle === v && (
-                <CheckCircle2 size={16} color="#7c3aed" style={{ marginLeft: 'auto' }} />
+              {selectedPhoto === photo.id ? (
+                <ImageOff size={20} color={colors.textMuted} />
+              ) : (
+                <Image size={20} color={colors.textMuted} />
               )}
+              <Text style={styles.photoLabel}>{photo.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Confirm Schedule Button */}
-        <TouchableOpacity
-          style={styles.confirmBtn}
-          onPress={handleConfirmSchedule}
-          activeOpacity={0.85}
-        >
-          <CalendarIcon size={18} color="#ffffff" />
-          <Text style={styles.confirmBtnText}>Confirm Pickup Schedule</Text>
-        </TouchableOpacity>
+        {/* Custody Timeline */}
+        <SectionHeader title="Custody Timeline" subtitle="Chain of custody events" />
+        <View style={styles.timeline}>
+          {BATCH.timeline.map((event, index) => {
+            const isLast = index === BATCH.timeline.length - 1;
+            const theme = variantMap[event.variant];
+            return (
+              <View key={event.id} style={styles.timelineItem}>
+                <View style={styles.timelineLine}>
+                  {!isLast && <View style={styles.timelineConnector} />}
+                </View>
+                <View style={styles.timelineContent}>
+                  <View style={styles.timelineEventRow}>
+                    <StatusBadge variant={event.variant} style={styles.timelineBadge}>
+                      {event.status}
+                    </StatusBadge>
+                    <Text style={styles.timelineTime}>{event.time}</Text>
+                  </View>
+                  <Text style={styles.timelineLocation}>{event.location}</Text>
+                  {event.note && <Text style={styles.timelineNote}>{event.note}</Text>}
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionsRow}>
+          <Button
+            title="Request Pickup"
+            variant="outline"
+            onPress={() => router.push('/(buyer)/receipt-confirm')}
+            style={{
+              borderColor: PRIMARY,
+              backgroundColor: 'transparent',
+            }}
+            textStyle={{ color: PRIMARY, fontWeight: '700' }}
+          />
+          <Button
+            title="Schedule Pickup"
+            variant="primary"
+            onPress={() => router.push('/(buyer)/receipt-confirm')}
+            style={{
+              backgroundColor: PRIMARY,
+              borderColor: 'transparent',
+              marginLeft: 10,
+            }}
+            textStyle={{ color: '#ffffff', fontWeight: '700' }}
+          />
+        </View>
 
         <View style={{ height: 24 }} />
       </ScrollView>
@@ -183,7 +311,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  batchCard: {
+  infoCard: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 16,
@@ -191,191 +319,149 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: 14,
   },
-  batchTop: {
+  infoTop: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
   },
-  batchTag: {
-    width: 42,
-    height: 42,
+  infoBadge: {
+    width: 44,
+    height: 44,
     borderRadius: 12,
-    backgroundColor: '#f5f3ff',
+    backgroundColor: PRIMARY_LIGHT,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
   },
-  batchMeta: {
+  infoMeta: {
     flex: 1,
+    marginHorizontal: 12,
   },
-  batchTitle: {
-    fontSize: 15,
+  batchNumber: {
+    fontSize: 17,
     fontWeight: '800',
     color: colors.textPrimary,
   },
-  batchSub: {
+  batchType: {
     fontSize: 11,
     color: colors.textSecondary,
     marginTop: 2,
   },
-  batchKg: {
-    fontSize: 18,
+  batchWeight: {
+    fontSize: 20,
     fontWeight: '800',
-    color: '#7c3aed',
+    color: PRIMARY,
   },
-  purityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 12,
-    paddingTop: 10,
-    borderTopWidth: 0.8,
-    borderTopColor: colors.borderLight,
+  infoDivider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginVertical: 12,
   },
-  purityBadge: {
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+  infoRow: {
+    gap: 10,
   },
-  purityText: {
+  infoCol: {
+    flex: 1,
+  },
+  infoLabel: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#15803d',
-  },
-  eprBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  eprText: {
-    fontSize: 10,
+    color: colors.textMuted,
     fontWeight: '600',
-    color: colors.textSecondary,
+    marginBottom: 4,
   },
-  calendarCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 14,
-  },
-  calendarHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  monthTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+  infoValue: {
+    fontSize: 13,
     color: colors.textPrimary,
-  },
-  calNav: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  calNavBtn: {
-    padding: 4,
-  },
-  weekdaysRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 8,
-  },
-  weekdayText: {
-    fontSize: 11,
     fontWeight: '600',
-    color: colors.textSecondary,
-    width: 32,
-    textAlign: 'center',
   },
-  daysGrid: {
+  gradeChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  gradeChipText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  conditionChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  conditionChipText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  photosGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 10,
   },
-  emptyDay: {
-    width: '14.28%',
-    height: 36,
-  },
-  dayCell: {
-    width: '14.28%',
-    height: 36,
+  photoBox: {
+    width: '48%',
+    aspectRatio: 1,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 18,
-    marginVertical: 2,
+    gap: 6,
+    overflow: 'hidden',
   },
-  dayCellSelected: {
-    backgroundColor: '#7c3aed',
+  photoBoxSelected: {
+    borderColor: PRIMARY,
+    backgroundColor: PRIMARY_LIGHT,
   },
-  dayCellDisabled: {
-    opacity: 0.3,
+  photoLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
-  dayText: {
-    fontSize: 12,
-    fontWeight: '600',
+  timeline: {
+    marginBottom: 16,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    marginBottom: 14,
+  },
+  timelineLine: {
+    width: 24,
+    alignItems: 'center',
+  },
+  timelineConnector: {
+    width: 2,
+    backgroundColor: colors.borderLight,
+  },
+  timelineContent: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  timelineEventRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
+  timelineBadge: {
+    // variant handles color
+  },
+  timelineTime: {
+    fontSize: 11,
+    fontWeight: '700',
     color: colors.textPrimary,
   },
-  dayTextSelected: {
-    color: '#ffffff',
-    fontWeight: '800',
+  timelineLocation: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginBottom: 2,
   },
-  dayTextDisabled: {
+  timelineNote: {
+    fontSize: 10,
     color: colors.textMuted,
   },
-  vehicleCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 18,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 10,
-  },
-  vOption: {
+  actionsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 10,
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 8,
-  },
-  vOptionSelected: {
-    borderColor: '#7c3aed',
-    backgroundColor: '#faf5ff',
-  },
-  vText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  vTextActive: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  confirmBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#7c3aed',
-    borderRadius: 14,
-    paddingVertical: 16,
-  },
-  confirmBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

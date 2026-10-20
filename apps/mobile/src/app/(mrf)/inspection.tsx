@@ -1,196 +1,238 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { HeaderBar } from '../../components/common/HeaderBar';
-import { BottomNav } from '../../components/common/BottomNav';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Screen } from '../../components/ui/Screen';
+import { Card } from '../../components/ui/Card';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
 import { colors } from '../../theme/colors';
 import {
+  Layers,
+  Image,
+  ImageMinus,
   CheckCircle2,
   Droplets,
-  Sparkles,
-  ShieldAlert,
   Award,
-  Layers,
   Save,
+  AlertTriangle,
 } from 'lucide-react-native';
+
+const mrf = colors.roles.mrf;
+
+const inspectionSchema = z.object({
+  condition: z.enum(['Clean', 'Slightly Dirty', 'Contaminated']),
+  moisture: z.enum(['Low', 'Medium', 'High']),
+  qualityGrade: z.enum(['A', 'B', 'C']),
+  remarks: z.string().optional(),
+});
+
+type InspectionForm = z.infer<typeof inspectionSchema>;
+
+const CONDITION_OPTIONS = ['Clean', 'Slightly Dirty', 'Contaminated'] as const;
+const MOISTURE_OPTIONS = ['Low', 'Medium', 'High'] as const;
+const GRADE_OPTIONS = ['A', 'B', 'C'] as const;
+
+const BATCH = {
+  id: 'mrf-b-0143',
+  batchNumber: 'MLP-2026-0143',
+  collectionPointName: 'CP-03 Gandhi Street',
+  inspector: 'Ramesh K',
+  weightKg: 12.8,
+  wasteType: 'MLP' as const,
+};
+
+const PHOTOS = [
+  { id: 'p1', uri: 'https://images.unsplash.com/photo-1542281284-97026f9e77f2?w=400&q=80' },
+  { id: 'p2', uri: 'https://images.unsplash.com/photo-1586520667076-2228b04490e3?w=400&q=80' },
+  { id: 'p3', uri: 'https://images.unsplash.com/photo-1533022796081-4be9f70059ed?w=400&q=80' },
+];
 
 export default function MrfInspectionScreen() {
   const router = useRouter();
 
-  const [condition, setCondition] = useState<'Clean' | 'Slightly Dirty' | 'Contaminated'>('Clean');
-  const [moisture, setMoisture] = useState<'Low' | 'Medium' | 'High'>('Low');
+  const form = useForm<InspectionForm>({
+    defaultValues: {
+      condition: 'Clean',
+      moisture: 'Low',
+      qualityGrade: 'A',
+      remarks: '',
+    },
+  });
 
-  // Compute grade based on criteria
-  const getComputedGrade = (): { grade: 'A' | 'B' | 'C'; label: string; color: string; bg: string } => {
-    if (condition === 'Clean' && moisture === 'Low') {
-      return { grade: 'A', label: 'Good Quality • High Purity', color: '#15803d', bg: '#ecfdf5' };
+  const condition = form.watch('condition');
+  const moisture = form.watch('moisture');
+  const qualityGrade = form.watch('qualityGrade');
+
+  const onSubmit = (values: InspectionForm) => {
+    const result = inspectionSchema.safeParse(values);
+    if (!result.success) {
+      Alert.alert('Validation Error', 'Please complete all required fields.');
+      return;
     }
-    if (condition === 'Contaminated' || moisture === 'High') {
-      return { grade: 'C', label: 'Needs Pre-Washing & Drying', color: '#dc2626', bg: '#fef2f2' };
-    }
-    return { grade: 'B', label: 'Standard Recyclable Grade', color: '#b45309', bg: '#fffbeb' };
-  };
-
-  const gradeInfo = getComputedGrade();
-
-  const handleSaveInspection = () => {
     Alert.alert(
       'Inspection Saved',
-      `Batch MLP-2026-0143 evaluated as Grade ${gradeInfo.grade}. Ready for storage assignment.`,
+      `Batch ${BATCH.batchNumber} evaluated as Grade ${values.qualityGrade}. Ready for storage assignment.`,
       [
-        {
-          text: 'Assign Storage Zone',
-          onPress: () => router.push('/(mrf)/storage'),
-        },
-        {
-          text: 'Back to Dashboard',
-          onPress: () => router.push('/(mrf)/dashboard'),
-        },
+        { text: 'Assign Storage Zone', onPress: () => router.push('/(mrf)/storage') },
+        { text: 'Back to Dashboard', onPress: () => router.push('/(mrf)/dashboard') },
       ]
     );
   };
 
+  const toggleCondition = (value: (typeof CONDITION_OPTIONS)[number]) => {
+    form.setValue('condition', value);
+  };
+  const toggleMoisture = (value: (typeof MOISTURE_OPTIONS)[number]) => {
+    form.setValue('moisture', value);
+  };
+  const toggleGrade = (value: (typeof GRADE_OPTIONS)[number]) => {
+    form.setValue('qualityGrade', value);
+  };
+
   return (
-    <View style={styles.screen}>
-      <HeaderBar title="Quality Inspection" subtitle="Batch MLP-2026-0143 • 12.8 kg" showBack />
-
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Batch Info Header */}
-        <View style={styles.batchCard}>
-          <View style={styles.batchLeft}>
-            <View style={styles.batchIcon}>
-              <Layers size={22} color="#1a5c38" />
-            </View>
-            <View>
-              <Text style={styles.batchTitle}>Batch: MLP-2026-0143</Text>
-              <Text style={styles.batchSubtitle}>Origin: CP-03 Gandhi Street • Ramesh K</Text>
-            </View>
+    <Screen title="Quality Inspection" subtitle={`${BATCH.batchNumber} • ${BATCH.weightKg} kg`} showBack>
+      {/* Batch Info Header */}
+      <Card style={styles.batchCard} padding={14}>
+        <View style={styles.batchRow}>
+          <View style={[styles.batchIcon, { backgroundColor: '#e8f5e9' }]}>
+            <Layers size={18} color="#1a5c38" />
           </View>
-          <Text style={styles.batchWeight}>12.8 kg</Text>
-        </View>
-
-        {/* 1. Condition Selector */}
-        <Text style={styles.sectionHeader}>Surface Condition</Text>
-        <View style={styles.optionsRow}>
-          {(['Clean', 'Slightly Dirty', 'Contaminated'] as const).map((opt) => (
-            <TouchableOpacity
-              key={opt}
-              style={[
-                styles.optionBtn,
-                condition === opt && styles.optionBtnActive,
-              ]}
-              onPress={() => setCondition(opt)}
-              activeOpacity={0.8}
-            >
-              <Text
-                style={[
-                  styles.optionText,
-                  condition === opt && styles.optionTextActive,
-                ]}
-              >
-                {opt}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* 2. Moisture Selector */}
-        <Text style={styles.sectionHeader}>Moisture Level</Text>
-        <View style={styles.optionsRow}>
-          {(['Low', 'Medium', 'High'] as const).map((opt) => (
-            <TouchableOpacity
-              key={opt}
-              style={[
-                styles.optionBtn,
-                moisture === opt && styles.optionBtnActive,
-              ]}
-              onPress={() => setMoisture(opt)}
-              activeOpacity={0.8}
-            >
-              <Text
-                style={[
-                  styles.optionText,
-                  moisture === opt && styles.optionTextActive,
-                ]}
-              >
-                {opt}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* 3. Computed Quality Grade Display */}
-        <Text style={styles.sectionHeader}>Quality Grade Output</Text>
-        <View style={[styles.gradeCard, { backgroundColor: gradeInfo.bg, borderColor: gradeInfo.color }]}>
-          <View style={[styles.gradeBadgeCircle, { backgroundColor: gradeInfo.color }]}>
-            <Text style={styles.gradeBadgeLetter}>{gradeInfo.grade}</Text>
-          </View>
-          <View style={styles.gradeMeta}>
-            <Text style={[styles.gradeTitle, { color: gradeInfo.color }]}>
-              Grade {gradeInfo.grade}
+          <View style={styles.batchMeta}>
+            <Text style={styles.batchTitle}>Batch: {BATCH.batchNumber}</Text>
+            <Text style={styles.batchSubtitle}>
+              Origin: {BATCH.collectionPointName} • {BATCH.inspector}
             </Text>
-            <Text style={styles.gradeSub}>{gradeInfo.label}</Text>
           </View>
+          <Text style={styles.batchWeight}>{BATCH.weightKg} kg</Text>
         </View>
+      </Card>
 
-        {/* Save Button */}
-        <TouchableOpacity
-          style={styles.saveBtn}
-          onPress={handleSaveInspection}
-          activeOpacity={0.85}
-        >
-          <Save size={18} color="#ffffff" />
-          <Text style={styles.saveBtnText}>Save Inspection & Update Status</Text>
+      {/* Photo Grid */}
+      <SectionHeader title="Inspection Photos" viewAllLabel="Add Photo" onViewAll={() => {}} />
+      <View style={styles.photoGrid}>
+        {PHOTOS.map((photo) => (
+          <TouchableOpacity key={photo.id} style={styles.photoCard} activeOpacity={0.8}>
+            <View style={styles.photoPlaceholder}>
+              <Image size={20} color={colors.textMuted} />
+            </View>
+            <View style={styles.photoRemove}>
+              <ImageMinus size={14} color="#dc2626" />
+            </View>
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity style={styles.photoAdd} activeOpacity={0.8}>
+          <View style={styles.photoPlaceholderBorder}>
+            <Image size={20} color={colors.textMuted} />
+          </View>
+          <Text style={styles.photoAddText}>Add Photo</Text>
         </TouchableOpacity>
+      </View>
 
-        <View style={{ height: 24 }} />
-      </ScrollView>
+      {/* Surface Condition */}
+      <SectionHeader title="Surface Condition" />
+      <View style={styles.optionsRow}>
+        {CONDITION_OPTIONS.map((opt) => {
+          const isActive = condition === opt;
+          return (
+            <TouchableOpacity
+              key={opt}
+              style={[styles.optionBtn, isActive && styles.optionBtnActive]}
+              onPress={() => toggleCondition(opt)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.optionText, isActive && styles.optionTextActive]}>
+                {opt}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
-      <BottomNav />
-    </View>
+      {/* Moisture Level */}
+      <SectionHeader title="Moisture Level" />
+      <View style={styles.optionsRow}>
+        {MOISTURE_OPTIONS.map((opt) => {
+          const isActive = moisture === opt;
+          return (
+            <TouchableOpacity
+              key={opt}
+              style={[styles.optionBtn, isActive && styles.optionBtnActive]}
+              onPress={() => toggleMoisture(opt)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.optionText, isActive && styles.optionTextActive]}>
+                {opt}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Quality Grade */}
+      <SectionHeader title="Quality Grade" />
+      <View style={styles.optionsRow}>
+        {GRADE_OPTIONS.map((opt) => {
+          const isActive = qualityGrade === opt;
+          return (
+            <TouchableOpacity
+              key={opt}
+              style={[styles.optionBtn, isActive && styles.optionBtnActive]}
+              onPress={() => toggleGrade(opt)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.optionText, isActive && styles.optionTextActive]}>
+                {opt}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Remarks */}
+      <Input
+        value={form.watch('remarks') ?? ''}
+        onChangeText={(text) => form.setValue('remarks', text)}
+        label="Remarks"
+        placeholder="Add inspection notes..."
+        containerStyle={styles.inputContainer}
+      />
+
+      {/* Save Button */}
+      <Button
+        title="Save Inspection"
+        variant="primary"
+        leftIcon={<Save size={18} color="#ffffff" />}
+        fullWidth
+        onPress={form.handleSubmit(onSubmit)}
+      />
+
+      <View style={styles.bottomSpacer} />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.surface,
-  },
-  scroll: {
-    flex: 1,
-    padding: 16,
-  },
   batchCard: {
+    marginBottom: 4,
+  },
+  batchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 16,
-  },
-  batchLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
   },
   batchIcon: {
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: '#e8f5e9',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  batchMeta: {
+    flex: 1,
   },
   batchTitle: {
     fontSize: 14,
@@ -203,21 +245,75 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   batchWeight: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
-    color: colors.primary,
+    color: mrf.primary,
   },
-  sectionHeader: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 10,
-    marginTop: 6,
+  photoGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 4,
+  },
+  photoCard: {
+    width: 88,
+    height: 88,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  photoPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoPlaceholderBorder: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: colors.borderLight,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoRemove: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#fef2f2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoAdd: {
+    width: 88,
+    height: 88,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoAddText: {
+    marginTop: 8,
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
   optionsRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 4,
   },
   optionBtn: {
     flex: 1,
@@ -227,10 +323,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',
+    minHeight: 44,
   },
   optionBtnActive: {
-    backgroundColor: '#1a5c38',
-    borderColor: '#1a5c38',
+    backgroundColor: mrf.light,
+    borderColor: mrf.primary,
   },
   optionText: {
     fontSize: 12,
@@ -238,55 +335,13 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   optionTextActive: {
-    color: '#ffffff',
+    color: mrf.primary,
     fontWeight: '700',
   },
-  gradeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1.5,
-    marginBottom: 20,
-    marginTop: 2,
+  inputContainer: {
+    marginBottom: 10,
   },
-  gradeBadgeCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  gradeBadgeLetter: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#ffffff',
-  },
-  gradeMeta: {
-    flex: 1,
-  },
-  gradeTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  gradeSub: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  saveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#ea580c',
-    borderRadius: 14,
-    paddingVertical: 16,
-  },
-  saveBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
+  bottomSpacer: {
+    height: 20,
   },
 });

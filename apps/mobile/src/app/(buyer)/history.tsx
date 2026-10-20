@@ -1,31 +1,38 @@
 import React from 'react';
 import {
-  View,
-  Text,
   ScrollView,
-  TouchableOpacity,
   StyleSheet,
-  Alert,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { HeaderBar } from '../../components/common/HeaderBar';
 import { BottomNav } from '../../components/common/BottomNav';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { StatCard } from '../../components/ui/StatCard';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 import { BUYER_PURCHASE_HISTORY } from '../../lib/mock-data';
 import { colors } from '../../theme/colors';
-import {
-  FileText,
-  Download,
-  CheckCircle2,
-  Calendar,
-  Layers,
-  MapPin,
-} from 'lucide-react-native';
+import { Calendar, CloudDownload, FileText, Layers, MapPin } from 'lucide-react-native';
+
+const PRIMARY = colors.roles.buyer.primary; // #7c3aed
+const PRIMARY_LIGHT = colors.roles.buyer.light; // #f5f3ff
+
+const STATUS_VARIANT: Record<string, 'success' | 'info' | 'warning'> = {
+  Verified: 'success',
+  Received: 'info',
+  Scheduled: 'warning',
+};
 
 export default function BuyerHistoryScreen() {
   const totalSpend = BUYER_PURCHASE_HISTORY.reduce((acc, h) => acc + h.priceTotal, 0);
   const totalWeight = BUYER_PURCHASE_HISTORY.reduce((acc, h) => acc + h.weightKg, 0);
 
-  const handleDownloadInvoice = (po: string) => {
-    Alert.alert('Download Tax Invoice', `Tax Invoice & EPR Credit Token for ${po} downloaded.`);
+  const handleDownloadInvoice = (poNumber: string) => {
+    // eslint-disable-next-line no-alert
+    alert(`Tax Invoice & EPR Credit Token for ${poNumber} downloaded.`);
   };
 
   return (
@@ -33,66 +40,92 @@ export default function BuyerHistoryScreen() {
       <HeaderBar title="Purchase History" subtitle="Verified POs & EPR Credits" showBack />
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Cumulative Card */}
-        <View style={styles.totalCard}>
-          <View>
-            <Text style={styles.totalTitle}>Cumulative Procurement</Text>
-            <Text style={styles.totalWeight}>{totalWeight.toLocaleString()} kg</Text>
-          </View>
-          <View style={styles.totalRight}>
-            <Text style={styles.totalSpend}>₹{totalSpend.toLocaleString()}</Text>
-            <Text style={styles.totalSub}>4 Orders Completed</Text>
-          </View>
+        {/* Cumulative Stats */}
+        <View style={styles.statGrid}>
+          <StatCard
+            value={totalWeight.toLocaleString()}
+            label="Total Procured"
+            subtext="All time • kg"
+            icon={<Layers size={18} color={PRIMARY} />}
+            iconBg={PRIMARY_LIGHT}
+            iconColor={PRIMARY}
+            style={{ width: '48%' }}
+          />
+          <StatCard
+            value={`₹${totalSpend.toLocaleString()}`}
+            label="Total Spend"
+            subtext="All time • verified POs"
+            icon={<CloudDownload size={18} color="#15803d" />}
+            iconBg="#ecfdf5"
+            iconColor="#15803d"
+            style={{ width: '48%' }}
+          />
         </View>
 
-        <Text style={styles.sectionHeader}>Purchase Orders ({BUYER_PURCHASE_HISTORY.length})</Text>
+        <SectionHeader
+          title={`Purchase Orders (${BUYER_PURCHASE_HISTORY.length})`}
+          subtitle="Download tax invoice & EPR credit certificate per order"
+        />
 
         {BUYER_PURCHASE_HISTORY.map((po) => (
-          <View key={po.id} style={styles.poCard}>
-            <View style={styles.poCardHeader}>
-              <View style={styles.poLeft}>
-                <View style={styles.poIcon}>
-                  <FileText size={18} color="#7c3aed" />
+          <TouchableOpacity
+            key={po.id}
+            style={styles.poPressable}
+            activeOpacity={0.8}
+          >
+            <Card style={styles.poCard}>
+              <View style={styles.poHeader}>
+                <View style={styles.poIdGroup}>
+                  <View style={styles.poIcon}>
+                    <FileText size={18} color={PRIMARY} />
+                  </View>
+                  <View>
+                    <Text style={styles.poNumber}>{po.poNumber}</Text>
+                    <Text style={styles.poBatch}>Batch {po.batchNumber}</Text>
+                  </View>
                 </View>
-                <View>
-                  <Text style={styles.poNumber}>{po.poNumber}</Text>
-                  <Text style={styles.batchSub}>Batch: {po.batchNumber}</Text>
+                <StatusBadge variant={STATUS_VARIANT[po.status]}>
+                  {po.status}
+                </StatusBadge>
+              </View>
+
+              <View style={styles.poDivider} />
+
+              <View style={styles.poBody}>
+                <View style={styles.metaRow}>
+                  <MapPin size={12} color={colors.textSecondary} />
+                  <Text style={styles.metaText}>{po.origin}</Text>
+                </View>
+                <View style={styles.metaRow}>
+                  <Layers size={12} color={colors.textSecondary} />
+                  <Text style={styles.metaText}>
+                    {po.wasteType} Grade {po.grade} • {po.weightKg.toLocaleString()} kg
+                  </Text>
+                </View>
+                <View style={styles.metaRow}>
+                  <Calendar size={12} color={colors.textSecondary} />
+                  <Text style={styles.metaText}>{po.date}</Text>
+                </View>
+                <View style={styles.metaRow}>
+                  <Text style={styles.metaLabel}>Order Value</Text>
+                  <Text style={styles.metaValue}>₹{po.priceTotal.toLocaleString()}</Text>
                 </View>
               </View>
 
-              <View style={styles.poRight}>
-                <Text style={styles.poPrice}>₹{po.priceTotal.toLocaleString()}</Text>
-                <View style={styles.verifiedTag}>
-                  <CheckCircle2 size={10} color="#15803d" />
-                  <Text style={styles.verifiedText}>{po.status}</Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.poCardBody}>
-              <View style={styles.metaRow}>
-                <Layers size={12} color={colors.textSecondary} />
-                <Text style={styles.metaText}>{po.wasteType} Grade {po.grade} • {po.weightKg} kg</Text>
-              </View>
-              <View style={styles.metaRow}>
-                <MapPin size={12} color={colors.textSecondary} />
-                <Text style={styles.metaText}>{po.origin}</Text>
-              </View>
-              <View style={styles.metaRow}>
-                <Calendar size={12} color={colors.textSecondary} />
-                <Text style={styles.metaText}>{po.date}</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.invoiceBtn}
-              onPress={() => handleDownloadInvoice(po.poNumber)}
-              activeOpacity={0.8}
-            >
-              <Download size={14} color="#7c3aed" />
-              <Text style={styles.invoiceBtnText}>Download Invoice & EPR Certificate</Text>
-            </TouchableOpacity>
-          </View>
+              <Button
+                title="Download Invoice & EPR Certificate"
+                variant="outline"
+                onPress={() => handleDownloadInvoice(po.poNumber)}
+                style={{
+                  borderColor: PRIMARY,
+                  backgroundColor: 'transparent',
+                  marginTop: 8,
+                }}
+                textStyle={{ color: PRIMARY, fontSize: 11, fontWeight: '700' }}
+                fullWidth
+              />
+            </Card>
+          </TouchableOpacity>
         ))}
 
         <View style={{ height: 24 }} />
@@ -112,46 +145,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  totalCard: {
+  statGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
+    flexWrap: 'wrap',
+    gap: 10,
     marginBottom: 16,
   },
-  totalTitle: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  totalWeight: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginTop: 2,
-  },
-  totalRight: {
-    alignItems: 'flex-end',
-  },
-  totalSpend: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#7c3aed',
-  },
-  totalSub: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  sectionHeader: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 10,
+  poPressable: {
+    width: '100%',
   },
   poCard: {
     backgroundColor: '#ffffff',
@@ -161,22 +162,23 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: 10,
   },
-  poCardHeader: {
+  poHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 10,
   },
-  poLeft: {
+  poIdGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     flex: 1,
   },
   poIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: '#f5f3ff',
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: PRIMARY_LIGHT,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -185,40 +187,18 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.textPrimary,
   },
-  batchSub: {
+  poBatch: {
     fontSize: 11,
     color: colors.textSecondary,
-    marginTop: 1,
+    marginTop: 2,
   },
-  poRight: {
-    alignItems: 'flex-end',
-    gap: 3,
+  poDivider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginVertical: 10,
   },
-  poPrice: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  verifiedTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  verifiedText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#15803d',
-  },
-  poCardBody: {
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 0.8,
-    borderTopColor: colors.borderLight,
-    gap: 4,
+  poBody: {
+    gap: 6,
   },
   metaRow: {
     flexDirection: 'row',
@@ -229,21 +209,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.textSecondary,
   },
-  invoiceBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#faf5ff',
-    borderRadius: 10,
-    paddingVertical: 8,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#ddd6fe',
+  metaLabel: {
+    fontSize: 10,
+    color: colors.textMuted,
+    fontWeight: '600',
   },
-  invoiceBtnText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#7c3aed',
+  metaValue: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.textPrimary,
   },
 });

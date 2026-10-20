@@ -1,158 +1,235 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
+  Dimensions,
   ScrollView,
-  TouchableOpacity,
   StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { HeaderBar } from '../../components/common/HeaderBar';
 import { BottomNav } from '../../components/common/BottomNav';
-import { BUYER_AVAILABLE_BATCHES, BUYER_PURCHASE_HISTORY } from '../../lib/mock-data';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { Skeleton } from '../../components/ui/Skeleton';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { StatCard } from '../../components/ui/StatCard';
+import { BUYER_AVAILABLE_BATCHES } from '../../lib/mock-data';
 import { colors } from '../../theme/colors';
 import {
-  Factory,
-  ShoppingBag,
   Calendar,
-  Layers,
-  IndianRupee,
   ChevronRight,
-  TrendingUp,
   FileCheck2,
-  Clock,
+  IndianRupee,
+  Layers,
+  ShoppingBag,
 } from 'lucide-react-native';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const PRIMARY = colors.roles.buyer.primary; // #7c3aed
+const PRIMARY_LIGHT = colors.roles.buyer.light; // #f5f3ff
+const BORDER = colors.roles.buyer.border; // #ddd6fe
+
+interface KpiConfig {
+  value: string;
+  label: string;
+  sub: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  route: string;
+  trend?: string;
+}
+
+const KPIS: KpiConfig[] = [
+  {
+    value: '12',
+    label: 'Available Batches',
+    sub: '2.1 tons ready',
+    icon: <ShoppingBag size={18} color={PRIMARY} />,
+    iconBg: PRIMARY_LIGHT,
+    route: '/(buyer)/available-batches',
+  },
+  {
+    value: '2',
+    label: 'Scheduled Pickups',
+    sub: 'Next: Tomorrow',
+    icon: <Calendar size={18} color="#2563eb" />,
+    iconBg: '#eff6ff',
+    route: '/(buyer)/batch-detail',
+  },
+  {
+    value: '412 kg',
+    label: 'Total Received',
+    sub: 'Oct 2026',
+    icon: <Layers size={18} color="#15803d" />,
+    iconBg: '#ecfdf5',
+    route: '/(buyer)/receipt-confirm',
+  },
+  {
+    value: '₹48.5k',
+    label: 'Monthly Spend',
+    sub: '+18% vs last month',
+    icon: <IndianRupee size={18} color="#b45309" />,
+    iconBg: '#fef3c7',
+    route: '/(buyer)/procurement-chart',
+    trend: '+18%',
+  },
+];
 
 export default function BuyerDashboard() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 700);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const cardWidth = (SCREEN_WIDTH - 42) / 2;
+  const featured = BUYER_AVAILABLE_BATCHES.slice(0, 3);
+
+  const gradeVariant = (grade: 'A' | 'B' | 'C') => {
+    if (grade === 'A') return 'success';
+    if (grade === 'B') return 'warning';
+    return 'error';
+  };
 
   return (
     <View style={styles.screen}>
-      <HeaderBar
-        title="GreenCycle Pvt Ltd"
-        subtitle="Recycler Portal • Hosur Industrial Area"
-      />
+      <HeaderBar title="GreenCycle Pvt Ltd" subtitle="Recycler Portal • Hosur Industrial Area" />
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* 4 KPI Cards Grid */}
-        <View style={styles.grid}>
-          <TouchableOpacity
-            style={styles.gridCard}
-            onPress={() => router.push('/(buyer)/available-batches')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.kpiIcon, { backgroundColor: '#f5f3ff' }]}>
-              <ShoppingBag size={18} color="#7c3aed" />
-            </View>
-            <Text style={styles.kpiNumber}>12</Text>
-            <Text style={styles.kpiLabel}>Available Batches</Text>
-            <Text style={styles.kpiSub}>2.1 tons ready</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.gridCard}
-            onPress={() => router.push('/(buyer)/batch-detail')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.kpiIcon, { backgroundColor: '#eff6ff' }]}>
-              <Calendar size={18} color="#2563eb" />
-            </View>
-            <Text style={styles.kpiNumber}>2</Text>
-            <Text style={styles.kpiLabel}>Scheduled Pickups</Text>
-            <Text style={styles.kpiSub}>Next: Tomorrow</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.gridCard}
-            onPress={() => router.push('/(buyer)/receipt-confirm')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.kpiIcon, { backgroundColor: '#ecfdf5' }]}>
-              <Layers size={18} color="#15803d" />
-            </View>
-            <Text style={styles.kpiNumber}>412 kg</Text>
-            <Text style={styles.kpiLabel}>Total Received</Text>
-            <Text style={styles.kpiSub}>Oct 2026</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.gridCard}
-            onPress={() => router.push('/(buyer)/procurement-chart')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.kpiIcon, { backgroundColor: '#fef3c7' }]}>
-              <IndianRupee size={18} color="#b45309" />
-            </View>
-            <Text style={styles.kpiNumber}>₹48.5k</Text>
-            <Text style={styles.kpiLabel}>Monthly Spend</Text>
-            <Text style={[styles.kpiSub, { color: '#15803d' }]}>+18% volume</Text>
-          </TouchableOpacity>
-        </View>
+        {/* KPI Grid (skeleton while loading) */}
+        {isLoading ? (
+          <View style={styles.skeletonGrid}>
+            {KPIS.map((_, i) => (
+              <Skeleton key={i} width={cardWidth} height={150} />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {KPIS.map((kpi) => (
+              <TouchableOpacity
+                key={kpi.label}
+                style={styles.statWrap}
+                onPress={() => router.push(kpi.route)}
+                activeOpacity={0.8}
+              >
+                <StatCard
+                  value={kpi.value}
+                  label={kpi.label}
+                  subtext={kpi.sub}
+                  icon={kpi.icon}
+                  iconBg={kpi.iconBg}
+                  iconColor={PRIMARY}
+                  trend={kpi.trend}
+                  trendPositive
+                  style={{ width: cardWidth }}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {/* Action Banners */}
         <View style={styles.actionsContainer}>
           <TouchableOpacity
-            style={styles.actionBanner}
+            style={styles.bannerPressable}
             onPress={() => router.push('/(buyer)/available-batches')}
-            activeOpacity={0.85}
+            activeOpacity={0.8}
           >
-            <View style={styles.actionBannerLeft}>
-              <ShoppingBag size={22} color="#ffffff" />
-              <View>
-                <Text style={styles.actionBannerTitle}>Browse MLP & Polymer Batches</Text>
-                <Text style={styles.actionBannerSub}>Filter by Grade A purity & block locations</Text>
+            <Card style={{ ...styles.banner, backgroundColor: PRIMARY }}>
+              <View style={styles.bannerRow}>
+                <View style={styles.bannerIcon}>
+                  <ShoppingBag size={22} color="#ffffff" />
+                </View>
+                <View style={styles.bannerText}>
+                  <Text style={styles.bannerTitle}>Browse MLP & Polymer Batches</Text>
+                  <Text style={styles.bannerSub}>
+                    Filter by Grade A purity &amp; block locations
+                  </Text>
+                </View>
+                <ChevronRight size={18} color="#ffffff" />
               </View>
-            </View>
-            <ChevronRight size={18} color="#ffffff" />
+            </Card>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.actionBanner, { backgroundColor: '#1a5c38' }]}
+            style={styles.bannerPressable}
             onPress={() => router.push('/(buyer)/receipt-confirm')}
-            activeOpacity={0.85}
+            activeOpacity={0.8}
           >
-            <View style={styles.actionBannerLeft}>
-              <FileCheck2 size={22} color="#ffffff" />
-              <View>
-                <Text style={styles.actionBannerTitle}>Confirm Truck Delivery Receipt</Text>
-                <Text style={styles.actionBannerSub}>Weighbridge verification & proof upload</Text>
+            <Card style={{ ...styles.banner, backgroundColor: '#1a5c38' }}>
+              <View style={styles.bannerRow}>
+                <View style={styles.bannerIcon}>
+                  <FileCheck2 size={22} color="#ffffff" />
+                </View>
+                <View style={styles.bannerText}>
+                  <Text style={styles.bannerTitle}>Confirm Truck Delivery Receipt</Text>
+                  <Text style={styles.bannerSub}>
+                    Weighbridge verification &amp; proof upload
+                  </Text>
+                </View>
+                <ChevronRight size={18} color="#ffffff" />
               </View>
-            </View>
-            <ChevronRight size={18} color="#ffffff" />
+            </Card>
           </TouchableOpacity>
         </View>
 
-        {/* Recent Available Batches */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Featured MLP Batches</Text>
-          <TouchableOpacity onPress={() => router.push('/(buyer)/available-batches')}>
-            <Text style={styles.viewAllText}>See All (12)</Text>
-          </TouchableOpacity>
-        </View>
-
-        {BUYER_AVAILABLE_BATCHES.slice(0, 3).map((item) => (
+        {/* Featured MLP Batches */}
+        <SectionHeader
+          title="Featured MLP Batches"
+          onViewAll={() => router.push('/(buyer)/available-batches')}
+          viewAllLabel="See All (12)"
+        />
+        {featured.map((item) => (
           <TouchableOpacity
             key={item.id}
-            style={styles.batchCard}
+            style={styles.batchPressable}
             onPress={() => router.push('/(buyer)/batch-detail')}
             activeOpacity={0.8}
           >
-            <View style={styles.batchLeft}>
-              <View style={styles.polymerTag}>
-                <Text style={styles.polymerText}>{item.wasteType}</Text>
+            <Card style={styles.batchCard}>
+              <View style={styles.batchRow}>
+                <View style={styles.batchLeft}>
+                  <View
+                    style={[
+                      styles.materialPill,
+                      { backgroundColor: PRIMARY_LIGHT, borderColor: BORDER },
+                    ]}
+                  >
+                    <Text style={styles.materialText}>{item.wasteType}</Text>
+                  </View>
+                  <View style={styles.batchMeta}>
+                    <Text style={styles.batchId}>{item.batchNumber}</Text>
+                    <Text style={styles.batchOrigin}>{item.origin}</Text>
+                  </View>
+                </View>
+                <View style={styles.batchRight}>
+                  <Text style={styles.batchWeight}>{item.weightKg} kg</Text>
+                  <StatusBadge
+                    variant={gradeVariant(item.grade as 'A' | 'B' | 'C')}
+                    style={styles.gradeBadge}
+                    small
+                  >
+                    {`Grade ${item.grade}`}
+                  </StatusBadge>
+                  <Button
+                    title="Request"
+                    variant="outline"
+                    onPress={() => router.push('/(buyer)/receipt-confirm')}
+                    style={{
+                      marginTop: 8,
+                      borderColor: PRIMARY,
+                      backgroundColor: 'transparent',
+                    }}
+                    textStyle={{ color: PRIMARY, fontSize: 11, fontWeight: '700' }}
+                  />
+                </View>
               </View>
-              <View style={styles.batchMeta}>
-                <Text style={styles.batchId}>{item.batchNumber}</Text>
-                <Text style={styles.batchOrigin}>{item.origin}</Text>
-              </View>
-            </View>
-
-            <View style={styles.batchRight}>
-              <Text style={styles.batchWeight}>{item.weightKg} kg</Text>
-              <View style={styles.gradeBadge}>
-                <Text style={styles.gradeText}>Grade {item.grade}</Text>
-              </View>
-            </View>
+            </Card>
           </TouchableOpacity>
         ))}
 
@@ -173,124 +250,102 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  skeletonGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 16,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
     marginBottom: 16,
   },
-  gridCard: {
-    width: '48%',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  kpiIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  kpiNumber: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  kpiLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  kpiSub: {
-    fontSize: 10,
-    color: colors.textMuted,
-    marginTop: 2,
+  statWrap: {
+    // width is set inline via style prop on StatCard
   },
   actionsContainer: {
     gap: 10,
-    marginBottom: 18,
+    marginBottom: 16,
   },
-  actionBanner: {
+  bannerPressable: {
+    flex: 1,
+  },
+  banner: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#7c3aed',
     borderRadius: 14,
     padding: 14,
+    borderWidth: 0,
   },
-  actionBannerLeft: {
+  bannerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     flex: 1,
   },
-  actionBannerTitle: {
+  bannerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bannerText: {
+    flex: 1,
+  },
+  bannerTitle: {
     color: '#ffffff',
     fontSize: 13,
     fontWeight: '700',
   },
-  actionBannerSub: {
-    color: '#e9d5ff',
+  bannerSub: {
+    color: 'rgba(255,255,255,0.8)',
     fontSize: 10,
     marginTop: 2,
   },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  viewAllText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#7c3aed',
+  batchPressable: {
+    width: '100%',
   },
   batchCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     backgroundColor: '#ffffff',
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 8,
+    marginBottom: 10,
+  },
+  batchRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   batchLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
     gap: 10,
+    flex: 1,
   },
-  polymerTag: {
-    backgroundColor: '#f5f3ff',
+  materialPill: {
     paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd6fe',
   },
-  polymerText: {
-    fontSize: 11,
+  materialText: {
+    fontSize: 10,
     fontWeight: '800',
-    color: '#7c3aed',
+    color: PRIMARY,
   },
   batchMeta: {
     flex: 1,
   },
   batchId: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.textPrimary,
   },
   batchOrigin: {
@@ -300,22 +355,21 @@ const styles = StyleSheet.create({
   },
   batchRight: {
     alignItems: 'flex-end',
-    gap: 3,
+    gap: 8,
   },
   batchWeight: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
     color: colors.textPrimary,
   },
   gradeBadge: {
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
   },
   gradeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#15803d',
   },
 });

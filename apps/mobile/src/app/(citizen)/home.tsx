@@ -1,321 +1,257 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { HeaderBar } from '../../components/common/HeaderBar';
-import { BottomNav } from '../../components/common/BottomNav';
+import { Screen } from '../../components/ui/Screen';
+import { Card } from '../../components/ui/Card';
+import { StatCard } from '../../components/ui/StatCard';
+import { Button } from '../../components/ui/Button';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 import { colors } from '../../theme/colors';
+import { VILLAGES_DATA } from '../../lib/mock-data';
 import {
   Award,
   AlertTriangle,
   Calendar,
-  BookOpen,
-  ArrowRight,
-  TrendingUp,
-  Leaf,
-  Layers,
   Sparkles,
+  ChevronRight,
+  TrendingUp,
 } from 'lucide-react-native';
+
+const CITIZEN_PRIMARY = colors.roles.citizen.primary; // #d97706
+const CITIZEN_LIGHT = colors.roles.citizen.light; // #fef3c7
+
+const village = VILLAGES_DATA[0];
 
 export default function CitizenHomeScreen() {
   const router = useRouter();
 
   return (
-    <View style={styles.screen}>
-      <HeaderBar
-        title="Hello, Karthik!"
-        subtitle="Resident • Shanti Nagar Ward 3"
+    <Screen title="Hello, Karthik!" subtitle="Resident • Shanti Nagar Ward 3">
+      {/* Counters */}
+      <View style={styles.countersRow}>
+        <StatCard
+          value="125 pts"
+          label="My Green Rewards"
+          subtext="Redeem for eco-vouchers"
+          icon={<Award size={20} color={CITIZEN_PRIMARY} />}
+          iconBg={CITIZEN_LIGHT}
+          iconColor={CITIZEN_PRIMARY}
+        />
+        <StatCard
+          value="4"
+          label="My Reports Logged"
+          subtext="2 collected • 2 pending"
+          icon={<AlertTriangle size={20} color="#2563eb" />}
+          iconBg="#eff6ff"
+          iconColor="#2563eb"
+        />
+      </View>
+
+      {/* Quick Actions */}
+      <SectionHeader
+        title="Quick Actions"
+        subtitle="Start a report or check today's pickup"
       />
+      <View style={styles.actionsRow}>
+        <Button
+          title="Report Full Bin"
+          variant="primary"
+          style={{
+            width: '48%',
+            backgroundColor: CITIZEN_PRIMARY,
+            borderColor: CITIZEN_PRIMARY,
+          }}
+          leftIcon={<AlertTriangle size={18} color="#ffffff" />}
+          onPress={() => router.push('/(citizen)/report-bin')}
+        />
+        <Button
+          title="Collection Schedule"
+          variant="outline"
+          style={{ width: '48%', borderColor: '#1a5c38' }}
+          leftIcon={<Calendar size={18} color="#1a5c38" />}
+          textStyle={{ color: '#1a5c38' }}
+          onPress={() => router.push('/(citizen)/schedule')}
+        />
+      </View>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Top 2 Counters */}
-        <View style={styles.countersRow}>
-          <TouchableOpacity
-            style={styles.counterCard}
-            onPress={() => router.push('/(citizen)/rewards')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.counterIcon, { backgroundColor: '#fef3c7' }]}>
-              <Award size={20} color="#d97706" />
-            </View>
-            <View>
-              <Text style={styles.counterVal}>125 pts</Text>
-              <Text style={styles.counterSub}>My Green Rewards</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.counterCard}
-            onPress={() => router.push('/(citizen)/profile')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.counterIcon, { backgroundColor: '#eff6ff' }]}>
-              <AlertTriangle size={20} color="#2563eb" />
-            </View>
-            <View>
-              <Text style={styles.counterVal}>4</Text>
-              <Text style={styles.counterSub}>My Reports Logged</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* 2 Big Action Buttons */}
-        <View style={styles.mainActionsRow}>
-          <TouchableOpacity
-            style={[styles.mainActionBtn, { backgroundColor: '#ea580c' }]}
-            onPress={() => router.push('/(citizen)/report-bin')}
-            activeOpacity={0.85}
-          >
-            <AlertTriangle size={20} color="#ffffff" />
-            <Text style={styles.mainActionText}>Report Full Bin</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.mainActionBtn, { backgroundColor: '#1a5c38' }]}
-            onPress={() => router.push('/(citizen)/schedule')}
-            activeOpacity={0.85}
-          >
-            <Calendar size={20} color="#ffffff" />
-            <Text style={styles.mainActionText}>Collection Schedule</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Segregation Guide Promo Card */}
-        <TouchableOpacity
-          style={styles.guideCard}
-          onPress={() => router.push('/(citizen)/learn')}
-          activeOpacity={0.85}
-        >
-          <View style={styles.guideLeft}>
-            <View style={styles.guideBadge}>
+      {/* Segregation Guide Promo Card */}
+      <TouchableOpacity
+        style={styles.cardWrapper}
+        onPress={() => router.push('/(citizen)/learn')}
+        activeOpacity={0.85}
+      >
+        <Card padding={14} style={styles.promoCard}>
+          <View style={styles.promoHeader}>
+            <View style={[styles.promoBadge, { backgroundColor: '#ecfdf5' }]}>
               <Sparkles size={12} color="#15803d" />
-              <Text style={styles.guideBadgeText}>Tip of the Day</Text>
+              <Text style={styles.promoBadgeText}>Tip of the Day</Text>
             </View>
-            <Text style={styles.guideTitle}>How to Segregate MLP?</Text>
-            <Text style={styles.guideSub}>
+            <Text style={styles.promoTitle}>How to Segregate MLP?</Text>
+            <Text style={styles.promoSub}>
               Rinse chips & biscuit packets, keep them dry, and place in Friday's MLP bin.
             </Text>
-            <View style={styles.learnRow}>
-              <Text style={styles.learnText}>Read Interactive Guide (English & தமிழ்)</Text>
-              <ArrowRight size={14} color="#1a5c38" />
-            </View>
           </View>
-        </TouchableOpacity>
+          <View style={styles.promoFooter}>
+            <View style={styles.promoLinkRow}>
+              <Text style={styles.promoLink}>Read Interactive Guide</Text>
+              <Text style={styles.promoLinkTamil}>English & தமிழ்</Text>
+            </View>
+            <ChevronRight size={16} color={CITIZEN_PRIMARY} />
+          </View>
+        </Card>
+      </TouchableOpacity>
 
-        {/* Village Progress Card */}
-        <TouchableOpacity
-          style={styles.villageProgressCard}
-          onPress={() => router.push('/(citizen)/village-progress')}
-          activeOpacity={0.85}
-        >
+      {/* Village Progress Card */}
+      <TouchableOpacity
+        style={styles.cardWrapper}
+        onPress={() => router.push('/(citizen)/village-progress')}
+        activeOpacity={0.85}
+      >
+        <Card padding={14} style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <View>
-              <Text style={styles.progressVillage}>Shanti Nagar Progress</Text>
-              <Text style={styles.progressSub}>Clean Village Clean India Initiative</Text>
+              <Text style={styles.progressTitle}>Shanti Nagar Progress</Text>
+              <Text style={styles.progressSub}>Clean Village Initiative</Text>
             </View>
-            <View style={styles.growthBadge}>
-              <TrendingUp size={12} color="#15803d" />
-              <Text style={styles.growthText}>+12% Waste</Text>
+            <StatusBadge variant="success" small>+12% Growth</StatusBadge>
+          </View>
+          <View style={styles.progressMetricsRow}>
+            <View style={styles.metricCol}>
+              <Text style={styles.metricValue}>320.5 kg</Text>
+              <Text style={styles.metricLabel}>Total Segregated</Text>
+            </View>
+            <View style={styles.progressDivider} />
+            <View style={styles.metricCol}>
+              <Text style={[styles.metricValue, { color: CITIZEN_PRIMARY }]}>86.4 kg</Text>
+              <Text style={styles.metricLabel}>MLP Collected</Text>
             </View>
           </View>
-
-          <View style={styles.progressRow}>
-            <View style={styles.progressCol}>
-              <Text style={styles.progressVal}>320.5 kg</Text>
-              <Text style={styles.progressLbl}>Total Segregated</Text>
-            </View>
-
-            <View style={styles.progressDiv} />
-
-            <View style={styles.progressCol}>
-              <Text style={[styles.progressVal, { color: '#1a5c38' }]}>86.4 kg</Text>
-              <Text style={styles.progressLbl}>MLP Collected (+18%)</Text>
-            </View>
+          <View style={styles.progressGrowthRow}>
+            <TrendingUp size={12} color="#15803d" />
+            <Text style={styles.progressGrowthText}>
+              {village.monthlyTotalKg} kg collected this month • {village.monthlyMlpKg} kg MLP diverted
+            </Text>
           </View>
-        </TouchableOpacity>
-
-        <View style={{ height: 24 }} />
-      </ScrollView>
-
-      <BottomNav />
-    </View>
+        </Card>
+      </TouchableOpacity>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.surface,
-  },
-  scroll: {
-    flex: 1,
-    padding: 16,
-  },
   countersRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 14,
-  },
-  counterCard: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 10,
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  counterIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  counterVal: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  counterSub: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    marginTop: 1,
-  },
-  mainActionsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  mainActionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderRadius: 14,
-    paddingVertical: 14,
-  },
-  mainActionText: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  guideCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
     marginBottom: 14,
   },
-  guideLeft: {
-    gap: 6,
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 14,
   },
-  guideBadge: {
+  cardWrapper: {
+    marginBottom: 14,
+  },
+  promoCard: {},
+  promoHeader: {
+    gap: 8,
+  },
+  promoBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#ecfdf5',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
     alignSelf: 'flex-start',
+    marginBottom: 6,
   },
-  guideBadgeText: {
+  promoBadgeText: {
     fontSize: 10,
     fontWeight: '700',
     color: '#15803d',
   },
-  guideTitle: {
+  promoTitle: {
     fontSize: 16,
     fontWeight: '800',
     color: colors.textPrimary,
-    marginTop: 2,
   },
-  guideSub: {
+  promoSub: {
     fontSize: 12,
     color: colors.textSecondary,
     lineHeight: 17,
   },
-  learnRow: {
+  promoFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  promoLinkRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 6,
   },
-  learnText: {
+  promoLink: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1a5c38',
+    color: CITIZEN_PRIMARY,
   },
-  villageProgressCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 16,
+  promoLinkTamil: {
+    fontSize: 10,
+    color: colors.textMuted,
   },
+  progressCard: {},
   progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: 10,
   },
-  progressVillage: {
-    fontSize: 15,
+  progressTitle: {
+    fontSize: 16,
     fontWeight: '800',
     color: colors.textPrimary,
   },
   progressSub: {
     fontSize: 11,
     color: colors.textSecondary,
-    marginTop: 2,
+    marginTop: 1,
   },
-  growthBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  growthText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#15803d',
-  },
-  progressRow: {
+  progressMetricsRow: {
     flexDirection: 'row',
     backgroundColor: '#f8faf9',
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 12,
+    borderRadius: 10,
+    padding: 10,
   },
-  progressCol: {
+  metricCol: {
     flex: 1,
     alignItems: 'center',
   },
-  progressVal: {
+  metricValue: {
     fontSize: 18,
     fontWeight: '800',
     color: colors.textPrimary,
   },
-  progressLbl: {
+  metricLabel: {
     fontSize: 10,
     color: colors.textSecondary,
-    marginTop: 2,
+    marginTop: 1,
   },
-  progressDiv: {
+  progressDivider: {
     width: 1,
     backgroundColor: colors.border,
+    marginVertical: 4,
+  },
+  progressGrowthRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+  },
+  progressGrowthText: {
+    fontSize: 11,
+    color: colors.textSecondary,
   },
 });

@@ -1,28 +1,20 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
-import { HeaderBar } from '../../components/common/HeaderBar';
-import { BottomNav } from '../../components/common/BottomNav';
-import { CITIZEN_SCHEDULE } from '../../lib/mock-data';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Screen } from '../../components/ui/Screen';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { colors } from '../../theme/colors';
-import {
-  Calendar,
-  Clock,
-  CheckCircle2,
-  Bell,
-  Layers,
-  Leaf,
-  Trash2,
-  ShieldAlert,
-} from 'lucide-react-native';
+import { CITIZEN_SCHEDULE } from '../../lib/mock-data';
+import { CollectionScheduleItem } from '../../types';
+import { Calendar, Clock, CheckCircle2, Bell, Layers, Leaf, Trash2, ShieldAlert, ChevronRight } from 'lucide-react-native';
 
-const STREAM_ICONS = {
+const CITIZEN_PRIMARY = colors.roles.citizen.primary; // #d97706
+
+const STREAM_ICONS: Record<string, { icon: any; color: string; light: string }> = {
   Wet: { icon: Leaf, color: '#10b981', light: '#ecfdf5' },
   Dry: { icon: Trash2, color: '#2563eb', light: '#eff6ff' },
   MLP: { icon: Layers, color: '#1a5c38', light: '#e8f5e9' },
@@ -30,128 +22,200 @@ const STREAM_ICONS = {
 };
 
 export default function CitizenScheduleScreen() {
-  const handleSetReminder = (day: string) => {
-    Alert.alert('Collection Reminder', `Reminder set for 7:00 AM on ${day}. You'll receive a phone notification.`);
+  const router = useRouter();
+  const [reminders, setReminders] = useState<string[]>([]);
+
+  const upcoming = CITIZEN_SCHEDULE.find((s) => s.status === 'Upcoming');
+  const nextConfig = upcoming
+    ? STREAM_ICONS[upcoming.wasteType] || STREAM_ICONS.Dry
+    : undefined;
+  const NextIconComp = nextConfig?.icon;
+
+  const handleRemind = (item: CollectionScheduleItem) => {
+    if (reminders.includes(item.id)) {
+      Alert.alert('Already Set', `Reminder already set for ${item.dayName}.`);
+      return;
+    }
+    setReminders([...reminders, item.id]);
+    Alert.alert(
+      'Reminder Set',
+      `You will be notified before the ${item.wasteType} collection on ${item.dayName} at ${item.timing}.`
+    );
+  };
+
+  const handleRemoveReminder = (id: string) => {
+    setReminders(reminders.filter((r) => r !== id));
   };
 
   return (
-    <View style={styles.screen}>
-      <HeaderBar title="Collection Timetable" subtitle="Shanti Nagar Ward 3 Schedule" showBack />
-
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Info Banner */}
-        <View style={styles.banner}>
-          <Calendar size={20} color="#1a5c38" />
+    <Screen title="Collection Schedule" subtitle="Shanti Nagar Ward 3 Timetable" showBack>
+      {/* Info Banner */}
+      <Card padding={14} style={styles.bannerCard}>
+        <View style={styles.bannerRow}>
+          <Calendar size={20} color={CITIZEN_PRIMARY} />
           <View style={styles.bannerMeta}>
-            <Text style={styles.bannerTitle}>Daily Collection Window: 7:30 - 10:00 AM</Text>
+            <Text style={styles.bannerTitle}>Daily Collection Window</Text>
             <Text style={styles.bannerSub}>
-              Please keep your segregated bin outside your gate before 7:30 AM.
+              7:30 AM - 10:00 AM • Please keep your segregated bin outside your gate before 7:30 AM.
             </Text>
           </View>
         </View>
+      </Card>
 
-        <Text style={styles.sectionHeader}>Weekly Waste Streams</Text>
-
-        {CITIZEN_SCHEDULE.map((item) => {
-          const config = STREAM_ICONS[item.wasteType as keyof typeof STREAM_ICONS] || STREAM_ICONS.Dry;
-          const IconComp = config.icon;
-          const isDone = item.status === 'Completed';
-
-          return (
-            <View
-              key={item.id}
-              style={[
-                styles.scheduleCard,
-                item.wasteType === 'MLP' && styles.mlpSpecialCard,
-              ]}
-            >
-              <View style={styles.cardLeft}>
-                <View style={[styles.streamIconBox, { backgroundColor: config.light }]}>
-                  <IconComp size={22} color={config.color} />
-                </View>
-
-                <View style={styles.streamMeta}>
-                  <View style={styles.titleRow}>
-                    <Text style={styles.dayText}>{item.dayName}</Text>
-                    {item.wasteType === 'MLP' && (
-                      <View style={styles.specialBadge}>
-                        <Text style={styles.specialBadgeText}>Special Focus</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={[styles.streamType, { color: config.color }]}>
-                    {item.wasteType === 'MLP' ? 'MLP Multi-Layer Plastic' : `${item.wasteType} Waste`}
-                  </Text>
-                  <Text style={styles.timingText}>
-                    <Clock size={10} color={colors.textSecondary} /> {item.timing}
-                  </Text>
-                </View>
+      {/* Next Collection Highlight */}
+      {upcoming && (
+        <Card padding={14} style={styles.nextCard}>
+          <View style={styles.nextHeader}>
+            <Text style={styles.nextLabel}>Next Collection</Text>
+            <Text style={styles.nextDay}>{upcoming.dayName}</Text>
+          </View>
+          <View style={styles.nextBody}>
+            {nextConfig && (
+              <View style={[styles.streamIcon, { backgroundColor: nextConfig.light }]}>
+                <NextIconComp size={22} color={nextConfig.color} />
               </View>
+            )}
+            <View style={styles.nextMeta}>
+              <Text style={styles.nextWaste}>
+                {upcoming.wasteType === 'MLP' ? 'MLP Multi-Layer Plastic' : `${upcoming.wasteType} Waste`}
+              </Text>
+              <Text style={styles.nextTiming}>{upcoming.timing}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.remindBtn}
+              onPress={() => handleRemind(upcoming)}
+              activeOpacity={0.85}
+            >
+              <Bell size={14} color={CITIZEN_PRIMARY} />
+              <Text style={styles.remindText}>Set Reminder</Text>
+            </TouchableOpacity>
+          </View>
+        </Card>
+      )}
 
-              <View style={styles.cardRight}>
-                <View
-                  style={[
-                    styles.statusPill,
-                    isDone ? styles.pillDone : styles.pillUpcoming,
-                  ]}
-                >
-                  {isDone ? (
-                    <CheckCircle2 size={10} color="#15803d" />
-                  ) : (
-                    <Clock size={10} color="#2563eb" />
+      {/* Weekly Timetable */}
+      <SectionHeader
+        title="Weekly Timetable"
+        subtitle="Collection days and waste streams"
+        viewAllLabel="Report a Bin"
+        onViewAll={() => router.push('/(citizen)/report-bin')}
+      />
+
+      {CITIZEN_SCHEDULE.map((item) => {
+        const config = STREAM_ICONS[item.wasteType] || STREAM_ICONS.Dry;
+        const IconComp = config.icon;
+        const isDone = item.status === 'Completed';
+        const hasReminder = reminders.includes(item.id);
+
+        return (
+          <Card
+            key={item.id}
+            padding={14}
+            style={{
+              ...styles.scheduleCard,
+              ...(item.wasteType === 'MLP' ? styles.mlpCard : {}),
+            }}
+          >
+            <View style={styles.cardRow}>
+              <View style={[styles.streamIcon, { backgroundColor: config.light }]}>
+                <IconComp size={22} color={config.color} />
+              </View>
+              <View style={styles.meta}>
+                <View style={styles.titleRow}>
+                  <Text style={styles.dayText}>{item.dayName}</Text>
+                  {item.wasteType === 'MLP' && (
+                    <View style={styles.focusBadge}>
+                      <Text style={styles.focusText}>MLP Focus</Text>
+                    </View>
                   )}
-                  <Text
-                    style={[
-                      styles.statusText,
-                      isDone ? { color: '#15803d' } : { color: '#2563eb' },
-                    ]}
-                  >
-                    {item.status}
-                  </Text>
                 </View>
-
+                <Text style={[styles.wasteText, { color: config.color }]}>
+                  {item.wasteType === 'MLP' ? 'Multi-Layer Plastic' : `${item.wasteType} Waste`}
+                </Text>
+                <Text style={styles.timingText}>
+                  <Clock size={10} color={colors.textSecondary} /> {item.timing}
+                </Text>
+              </View>
+              <View style={styles.right}>
+                <StatusBadge
+                  variant={isDone ? 'success' : 'info'}
+                  small
+                  style={styles.statusBadge}
+                >
+                  {isDone ? 'Collected' : 'Upcoming'}
+                </StatusBadge>
                 {!isDone && (
                   <TouchableOpacity
                     style={styles.remindBtn}
-                    onPress={() => handleSetReminder(item.dayName)}
-                    activeOpacity={0.8}
+                    onPress={() => handleRemind(item)}
+                    activeOpacity={0.85}
                   >
-                    <Bell size={12} color="#1a5c38" />
-                    <Text style={styles.remindText}>Remind</Text>
+                    {hasReminder ? (
+                      <CheckCircle2 size={14} color="#15803d" />
+                    ) : (
+                      <Bell size={14} color={CITIZEN_PRIMARY} />
+                    )}
+                    <Text style={styles.remindText}>{hasReminder ? 'Reminder Set' : 'Set Reminder'}</Text>
                   </TouchableOpacity>
                 )}
               </View>
             </View>
-          );
-        })}
+          </Card>
+        );
+      })}
 
-        <View style={{ height: 24 }} />
-      </ScrollView>
-
-      <BottomNav />
-    </View>
+      {/* Reminders */}
+      <SectionHeader
+        title="Your Reminders"
+        subtitle="Stay on top of collection days"
+      />
+      {reminders.length === 0 ? (
+        <EmptyState
+          title="No reminders set yet"
+          subtitle="Tap 'Set Reminder' on any collection day to get notified before pickup."
+          icon={<Bell size={40} color={colors.textMuted} />}
+          action={{
+            label: 'Set Reminder',
+            onPress: () => {
+              if (upcoming) handleRemind(upcoming);
+            },
+          }}
+        />
+      ) : (
+        <View style={styles.remindersList}>
+          {reminders.map((id) => {
+            const item = CITIZEN_SCHEDULE.find((s) => s.id === id);
+            if (!item) return null;
+            const config = STREAM_ICONS[item.wasteType];
+            return (
+              <Card key={id} padding={12} style={styles.reminderCard}>
+                <View style={styles.reminderRow}>
+                  <Text style={styles.reminderDay}>{item.dayName}</Text>
+                  <Text style={[styles.reminderWaste, { color: config.color }]}>
+                    {item.wasteType} Waste
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => handleRemoveReminder(id)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.reminderRemove}>Remove</Text>
+                  </TouchableOpacity>
+                </View>
+              </Card>
+            );
+          })}
+        </View>
+      )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.surface,
-  },
-  scroll: {
-    flex: 1,
-    padding: 16,
-  },
-  banner: {
+  bannerCard: {},
+  bannerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 16,
   },
   bannerMeta: {
     flex: 1,
@@ -167,42 +231,78 @@ const styles = StyleSheet.create({
     marginTop: 2,
     lineHeight: 15,
   },
-  sectionHeader: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 10,
-  },
-  scheduleCard: {
+  nextCard: {},
+  nextHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
+    alignItems: 'flex-start',
     marginBottom: 10,
   },
-  mlpSpecialCard: {
-    borderColor: '#1a5c38',
-    borderWidth: 1.5,
-    backgroundColor: '#f8fdfa',
+  nextLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textSecondary,
   },
-  cardLeft: {
+  nextDay: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  nextBody: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
     gap: 12,
   },
-  streamIconBox: {
+  streamIcon: {
     width: 44,
     height: 44,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  streamMeta: {
+  nextMeta: {
+    flex: 1,
+  },
+  nextWaste: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  nextTiming: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  remindBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  remindText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: CITIZEN_PRIMARY,
+  },
+  scheduleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  mlpCard: {
+    borderColor: '#1a5c38',
+    borderWidth: 1.5,
+    backgroundColor: '#f8fdfa',
+  },
+  cardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  meta: {
     flex: 1,
   },
   titleRow: {
@@ -215,19 +315,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.textPrimary,
   },
-  specialBadge: {
+  focusBadge: {
     backgroundColor: '#dcfce7',
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 4,
   },
-  specialBadgeText: {
+  focusText: {
     fontSize: 9,
     fontWeight: '700',
     color: '#15803d',
   },
-  streamType: {
-    fontSize: 12,
+  wasteText: {
+    fontSize: 13,
     fontWeight: '700',
     marginTop: 2,
   },
@@ -236,40 +336,35 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  cardRight: {
+  right: {
     alignItems: 'flex-end',
-    gap: 6,
+    gap: 8,
   },
-  statusPill: {
+  statusBadge: {
+    marginBottom: 4,
+  },
+  remindersList: {
+    gap: 8,
+  },
+  reminderCard: {},
+  reminderRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
   },
-  pillDone: {
-    backgroundColor: '#ecfdf5',
+  reminderDay: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.textPrimary,
   },
-  pillUpcoming: {
-    backgroundColor: '#eff6ff',
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  remindBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  remindText: {
-    fontSize: 10,
+  reminderWaste: {
+    fontSize: 12,
     fontWeight: '600',
-    color: '#1a5c38',
+    color: colors.textSecondary,
+  },
+  reminderRemove: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#ef4444',
   },
 });

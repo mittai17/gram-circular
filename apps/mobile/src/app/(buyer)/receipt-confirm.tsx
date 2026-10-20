@@ -1,45 +1,104 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
   Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { HeaderBar } from '../../components/common/HeaderBar';
 import { BottomNav } from '../../components/common/BottomNav';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { StatCard } from '../../components/ui/StatCard';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 import { colors } from '../../theme/colors';
-import {
-  FileCheck2,
-  Scale,
-  Camera,
-  CheckCircle2,
-  AlertCircle,
-  ShieldCheck,
-  ArrowRight,
-} from 'lucide-react-native';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Camera, FileCheck2, Scale, Truck } from 'lucide-react-native';
+
+const PRIMARY = colors.roles.buyer.primary; // #7c3aed
+const TOLERANCE_PCT = 2;
+
+interface Receipt {
+  id: string;
+  poNumber: string;
+  batchNumber: string;
+  dispatchedKg: number;
+  receivedKg: number | null;
+  status: 'Pending' | 'Verified' | 'Discrepancy';
+}
+
+const RECEIPTS: Receipt[] = [
+  { id: 'r-1', poNumber: 'PO-2026-089', batchNumber: 'MLP-2026-0143', dispatchedKg: 162, receivedKg: null, status: 'Pending' },
+  { id: 'r-2', poNumber: 'PO-2026-084', batchNumber: 'MLP-2026-0128', dispatchedKg: 320, receivedKg: 320, status: 'Verified' },
+  { id: 'r-3', poNumber: 'PO-2026-079', batchNumber: 'MLP-2026-0120', dispatchedKg: 280, receivedKg: 275, status: 'Discrepancy' },
+  { id: 'r-4', poNumber: 'PO-2026-072', batchNumber: 'MLP-2026-0115', dispatchedKg: 150, receivedKg: 150, status: 'Verified' },
+];
+
+const ACTIVE = RECEIPTS[0];
+
+const receiptSchema = z.object({
+  receivedWeight: z
+    .string({ required_error: 'Received weight is required' })
+    .trim()
+    .min(1, 'Received weight is required')
+    .refine(
+      (val) => {
+        const n = Number(val);
+        return !isNaN(n) && n > 0 && n <= 10000;
+      },
+      'Enter a valid weight',
+    ),
+  notes: z.string().optional(),
+});
+
+type ReceiptForm = z.infer<typeof receiptSchema>;
 
 export default function BuyerReceiptConfirmScreen() {
   const router = useRouter();
+  const [attachedSlip, setAttachedSlip] = useState<string | null>(null);
 
-  const [receivedWeight, setReceivedWeight] = useState(160);
-  const expectedWeight = 162;
-  const varianceKg = (receivedWeight - expectedWeight).toFixed(1);
-  const [hasSlipPhoto, setHasSlipPhoto] = useState(true);
+  const {
+    control,
+    getValues,
+    setError,
+    formState: { errors },
+  } = useForm<ReceiptForm>({
+    defaultValues: { receivedWeight: '', notes: '' },
+  });
+
+  const dispatched = ACTIVE.dispatchedKg;
+  const toleranceKg = (dispatched * TOLERANCE_PCT) / 100;
 
   const handleConfirm = () => {
-    Alert.alert(
-      'Receipt Confirmed',
-      `PO-2026-089 Verified & Closed.\nReceived Weight: ${receivedWeight} kg (Variance: ${varianceKg} kg within acceptable 2% tolerance).\nEPR credit certificate generated.`,
-      [
-        {
-          text: 'View Purchase History',
-          onPress: () => router.push('/(buyer)/history'),
-        },
-      ]
-    );
+    const values = getValues();
+    try {
+      receiptSchema.parse(values);
+      Alert.alert(
+        'Receipt Confirmed',
+        `${ACTIVE.poNumber} verified & closed.\nReceived Weight: ${values.receivedWeight} kg (Variance within ${TOLERANCE_PCT}% tolerance).\nEPR credit certificate generated.`,
+        [
+          {
+            text: 'View Purchase History',
+            onPress: () => router.push('/(buyer)/history'),
+          },
+        ]
+      );
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        error.issues.forEach((issue) => {
+          setError(
+            issue.path[0] as 'receivedWeight' | 'notes',
+            { type: 'manual', message: issue.message },
+          );
+        });
+      }
+    }
   };
 
   return (
@@ -47,84 +106,148 @@ export default function BuyerReceiptConfirmScreen() {
       <HeaderBar title="Confirm Receipt" subtitle="Batch MLP-2026-0143 Verification" showBack />
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Verification Summary Card */}
-        <View style={styles.card}>
-          <View style={styles.cardTop}>
-            <View style={styles.iconCircle}>
-              <Scale size={24} color="#7c3aed" />
-            </View>
-            <View style={styles.meta}>
-              <Text style={styles.title}>Batch: MLP-2026-0143</Text>
-              <Text style={styles.subtitle}>Supplier: Kaveripattinam Block MRF Center</Text>
-            </View>
-          </View>
-
-          {/* Weighbridge Comparison */}
-          <View style={styles.comparisonBox}>
-            <View style={styles.compCol}>
-              <Text style={styles.compLabel}>Expected Weight</Text>
-              <Text style={styles.compVal}>{expectedWeight} kg</Text>
-            </View>
-
-            <View style={styles.compDiv} />
-
-            <View style={styles.compCol}>
-              <Text style={styles.compLabel}>Received Weight</Text>
-              <Text style={[styles.compVal, { color: '#7c3aed' }]}>{receivedWeight} kg</Text>
-            </View>
-          </View>
-
-          {/* Variance Note */}
-          <View style={styles.varianceRow}>
-            <CheckCircle2 size={14} color="#15803d" />
-            <Text style={styles.varianceText}>
-              Variance: {varianceKg} kg (1.2% moisture loss, within EPR standard 2% limit)
-            </Text>
-          </View>
+        {/* Receipts List */}
+        <SectionHeader
+          title="Handover Receipts"
+          subtitle="Dispatched vs received weight per purchase order"
+        />
+        <View style={styles.list}>
+          {RECEIPTS.map((r) => {
+            const variance = r.receivedKg != null ? r.receivedKg - r.dispatchedKg : null;
+            const withinTolerance =
+              variance != null ? Math.abs(variance) <= (r.dispatchedKg * TOLERANCE_PCT) / 100 : false;
+            return (
+              <TouchableOpacity
+                key={r.id}
+                style={styles.receiptCard}
+                activeOpacity={0.8}
+              >
+                <View style={styles.receiptHeader}>
+                  <View style={styles.receiptIds}>
+                    <Text style={styles.receiptPo}>{r.poNumber}</Text>
+                    <Text style={styles.receiptBatch}>{r.batchNumber}</Text>
+                  </View>
+                  <StatusBadge
+                    variant={
+                      r.status === 'Verified'
+                        ? 'success'
+                        : r.status === 'Discrepancy'
+                        ? 'error'
+                        : 'info'
+                    }
+                  >
+                    {r.status}
+                  </StatusBadge>
+                </View>
+                <View style={styles.receiptWeights}>
+                  <View style={styles.weightCol}>
+                    <Text style={styles.weightLabel}>Dispatched</Text>
+                    <Text style={styles.weightValue}>{r.dispatchedKg} kg</Text>
+                  </View>
+                  <View style={styles.weightCol}>
+                    <Text style={styles.weightLabel}>Received</Text>
+                    <Text style={[styles.weightValue, r.receivedKg == null && styles.weightPending]}>
+                      {r.receivedKg == null ? '—' : `${r.receivedKg} kg`}
+                    </Text>
+                  </View>
+                </View>
+                {variance != null && (
+                  <View style={styles.varianceRow}>
+                    <Text style={[styles.varianceText, !withinTolerance && styles.varianceOff]}>
+                      {variance >= 0 ? '+' : ''}{variance} kg vs dispatched
+                      {withinTolerance ? ' • within tolerance' : ' • discrepancy'}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        {/* Upload Proof Card */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Weighbridge Slip & Seal Proof</Text>
-          <Text style={styles.sectionSubtitle}>
-            Attach gross weighbridge slip and photo of unbroken truck security seal
-          </Text>
+        {/* Active Receipt Form */}
+        <SectionHeader
+          title={`Active Receipt • ${ACTIVE.poNumber}`}
+          subtitle="Confirm the received weight and upload weighbridge evidence"
+        />
 
-          <TouchableOpacity
-            style={[styles.uploadBox, hasSlipPhoto && styles.uploadBoxActive]}
-            onPress={() => {
-              setHasSlipPhoto(!hasSlipPhoto);
-              Alert.alert('Proof Photo', hasSlipPhoto ? 'Photo unattached' : 'Slip photo attached.');
-            }}
-            activeOpacity={0.8}
-          >
-            <Camera size={24} color={hasSlipPhoto ? '#15803d' : '#64748b'} />
-            <Text style={[styles.uploadText, hasSlipPhoto && { color: '#15803d', fontWeight: '700' }]}>
-              {hasSlipPhoto ? 'Slip Attached: WB-SLIP-77402.JPG' : 'Upload Weighbridge Slip Photo'}
+        <Card style={styles.formCard}>
+          <StatCard
+            value={`${dispatched} kg`}
+            label="Dispatched Weight"
+            subtext="Weighbridge gross weight"
+            icon={<Truck size={18} color={colors.textSecondary} />}
+            iconBg="#f1f5f9"
+            iconColor={colors.textSecondary}
+            style={{ width: '48%' }}
+          />
+
+          <Controller
+            control={control}
+            name="receivedWeight"
+            render={({ field: { value, onChange } }) => (
+              <Input
+                label="Received Weight (kg)"
+                value={value ?? ''}
+                onChangeText={(text: string) => {
+                  onChange(text);
+                  setError('receivedWeight', { type: 'manual', message: '' });
+                }}
+                keyboardType="numeric"
+                error={errors.receivedWeight?.message}
+                containerStyle={styles.inputContainer}
+              />
+            )}
+          />
+
+          <View style={styles.varianceNote}>
+            <Text style={styles.varianceLabel}>Acceptable variance:</Text>
+            <Text style={styles.varianceValue}>
+              ±{toleranceKg.toFixed(1)} kg ({TOLERANCE_PCT}% of dispatched)
             </Text>
+          </View>
+
+          {/* Evidence Upload */}
+          <View style={styles.evidenceSection}>
+            <Text style={styles.sectionTitle}>Evidence Upload</Text>
+            <Text style={styles.sectionSubtitle}>
+              Attach the gross weighbridge slip and a photo of the unbroken truck seal
+            </Text>
+            <TouchableOpacity
+              style={[styles.uploadBox, attachedSlip ? styles.uploadBoxActive : {}]}
+              onPress={() => setAttachedSlip(attachedSlip ? null : 'WB-SLIP-77402.JPG')}
+              activeOpacity={0.8}
+            >
+              <Camera size={24} color={attachedSlip ? '#15803d' : colors.textSecondary} />
+              <Text style={[styles.uploadText, attachedSlip && styles.uploadTextActive]}>
+                {attachedSlip ? `Slip Attached: ${attachedSlip}` : 'Upload Weighbridge Slip Photo'}
+              </Text>
+            </TouchableOpacity>
+            <Controller
+              control={control}
+              name="notes"
+              render={({ field: { value, onChange } }) => (
+                <Input
+                  label="Notes (optional)"
+                  placeholder="Add remarks about condition, seals or shortages…"
+                  value={value ?? ''}
+                  onChangeText={onChange}
+                  containerStyle={styles.noteInputContainer}
+                />
+              )}
+            />
+          </View>
+
+          <TouchableOpacity style={styles.confirmPressable} activeOpacity={0.85}>
+            <Button
+              title="Confirm & Close Receipt"
+              variant="primary"
+              onPress={handleConfirm}
+              style={{ backgroundColor: PRIMARY, borderColor: 'transparent' }}
+              textStyle={{ color: '#ffffff', fontWeight: '700' }}
+              fullWidth
+            />
           </TouchableOpacity>
-        </View>
-
-        {/* EPR Compliance Note */}
-        <View style={styles.eprBox}>
-          <ShieldCheck size={20} color="#15803d" />
-          <View style={styles.eprMeta}>
-            <Text style={styles.eprTitle}>Automated EPR Credit Allocation</Text>
-            <Text style={styles.eprSub}>
-              Closing this receipt mints verifiable recycling credits under Central Pollution Control Board (CPCB) norms.
-            </Text>
-          </View>
-        </View>
-
-        {/* Action Button */}
-        <TouchableOpacity
-          style={styles.confirmBtn}
-          onPress={handleConfirm}
-          activeOpacity={0.85}
-        >
-          <FileCheck2 size={18} color="#ffffff" />
-          <Text style={styles.confirmBtnText}>Confirm & Close Receipt</Text>
-        </TouchableOpacity>
+        </Card>
 
         <View style={{ height: 24 }} />
       </ScrollView>
@@ -143,87 +266,116 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  card: {
+  list: {
+    marginBottom: 16,
+  },
+  receiptCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 10,
+  },
+  receiptHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  receiptIds: {
+    flex: 1,
+  },
+  receiptPo: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  receiptBatch: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
+  receiptWeights: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  weightCol: {
+    flex: 1,
+  },
+  weightLabel: {
+    fontSize: 10,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+  weightValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  weightPending: {
+    color: colors.textMuted,
+  },
+  varianceRow: {
+    marginTop: 6,
+  },
+  varianceText: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  varianceOff: {
+    color: '#b45309',
+  },
+  formCard: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
+    marginBottom: 16,
+  },
+  inputContainer: {
     marginBottom: 14,
   },
-  cardTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#f5f3ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  meta: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  subtitle: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  comparisonBox: {
-    flexDirection: 'row',
-    backgroundColor: '#f8faf9',
-    borderRadius: 12,
-    padding: 14,
-  },
-  compCol: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  compLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  compVal: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.textPrimary,
+  noteInputContainer: {
     marginTop: 4,
+    marginBottom: 0,
   },
-  compDiv: {
-    width: 1,
-    backgroundColor: colors.border,
-  },
-  varianceRow: {
+  varianceNote: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 12,
+    gap: 8,
+    backgroundColor: '#faf5ff',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: colors.roles.buyer.border,
   },
-  varianceText: {
+  varianceLabel: {
     fontSize: 11,
-    color: '#15803d',
+    color: colors.textSecondary,
     fontWeight: '600',
-    flex: 1,
+  },
+  varianceValue: {
+    fontSize: 11,
+    color: PRIMARY,
+    fontWeight: '800',
+  },
+  evidenceSection: {
+    marginTop: 4,
   },
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
     color: colors.textPrimary,
+    marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 11,
     color: colors.textSecondary,
-    marginTop: 2,
     marginBottom: 12,
   },
   uploadBox: {
@@ -237,6 +389,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 18,
     backgroundColor: '#f8faf9',
+    minHeight: 56,
   },
   uploadBoxActive: {
     borderColor: '#10b981',
@@ -248,43 +401,11 @@ const styles = StyleSheet.create({
     color: '#475569',
     fontWeight: '600',
   },
-  eprBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#ecfdf5',
-    borderWidth: 1,
-    borderColor: '#a7f3d0',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 20,
-  },
-  eprMeta: {
-    flex: 1,
-  },
-  eprTitle: {
-    fontSize: 12,
-    fontWeight: '700',
+  uploadTextActive: {
     color: '#15803d',
-  },
-  eprSub: {
-    fontSize: 10,
-    color: '#166534',
-    marginTop: 2,
-    lineHeight: 14,
-  },
-  confirmBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#1a5c38',
-    borderRadius: 14,
-    paddingVertical: 16,
-  },
-  confirmBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
     fontWeight: '700',
+  },
+  confirmPressable: {
+    width: '100%',
   },
 });

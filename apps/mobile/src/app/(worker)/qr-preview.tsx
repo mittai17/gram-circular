@@ -1,15 +1,11 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { HeaderBar } from '../../components/common/HeaderBar';
-import { BottomNav } from '../../components/common/BottomNav';
+import { Screen } from '../../components/ui/Screen';
+import { Card } from '../../components/ui/Card';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { Button } from '../../components/ui/Button';
 import { QRDisplay } from '../../components/qr/QRDisplay';
 import { colors } from '../../theme/colors';
 import {
@@ -20,6 +16,8 @@ import {
   Layers,
   MapPin,
   Calendar,
+  Download,
+  Eye,
 } from 'lucide-react-native';
 
 export default function WorkerQrPreviewScreen() {
@@ -28,6 +26,7 @@ export default function WorkerQrPreviewScreen() {
   const batchNumber = 'MLP-2026-0143';
   const weight = 12.8;
   const point = 'CP-03 Gandhi Street';
+  const ward = 'Shanti Nagar Ward 2';
   const dateStr = '16 Oct 2026, 10:24 AM';
   const qrData = JSON.stringify({
     batch: batchNumber,
@@ -38,134 +37,186 @@ export default function WorkerQrPreviewScreen() {
     timestamp: dateStr,
   });
 
-  const handleShare = () => {
-    Alert.alert('Share Label', `Batch QR payload for ${batchNumber} copied to clipboard.`);
-  };
-
   const handlePrint = () => {
     Alert.alert('Bluetooth Printer', 'Sent label print command to portable BT thermal printer.');
   };
 
+  const handleShare = () => {
+    Alert.alert('Share Label', `Batch QR payload for ${batchNumber} copied to clipboard.`);
+  };
+
+  const handleViewPassport = () => {
+    Alert.alert('Batch Passport', `Opening digital passport for ${batchNumber}.`);
+  };
+
   return (
-    <View style={styles.screen}>
-      <HeaderBar title="QR Generated" subtitle="Batch Tag Ready" showBack />
-
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.successBanner}>
-          <CheckCircle2 size={18} color="#15803d" />
-          <Text style={styles.successText}>Bag Record Created & Saved to Queue</Text>
+    <Screen
+      title="QR Batch Passport"
+      subtitle="Batch Tag Ready for Dispatch"
+      showBack
+      showOfflineBanner
+      showBottomNav
+    >
+      {/* Success Banner */}
+      <Card style={styles.successBanner} padding={12} shadow="none">
+        <View style={styles.successRow}>
+          <CheckCircle2 size={16} color="#15803d" />
+          <Text style={styles.successText}>Batch Record Created & Saved to Queue</Text>
         </View>
+      </Card>
 
-        {/* QR Code Container */}
-        <View style={styles.qrCard}>
+      {/* QR Code Display */}
+      <Card style={styles.qrCard} padding={20} shadow="md">
+        <View style={styles.qrWrapper}>
           <QRDisplay
             value={qrData}
             batchNumber={batchNumber}
             weightKg={weight}
             collectionPoint={point}
-            size={210}
+            size={240}
           />
+        </View>
 
-          <View style={styles.metaBox}>
-            <View style={styles.metaRow}>
-              <Layers size={14} color={colors.textSecondary} />
-              <Text style={styles.metaLabel}>Stream:</Text>
+        <SectionHeader
+          title="Batch Details"
+          subtitle="Scannable collection record"
+          style={styles.sectionHeader}
+        />
+
+        <View style={styles.metaBox}>
+          <View style={styles.metaRow}>
+            <Layers size={14} color={colors.textSecondary} />
+            <View style={styles.metaText}>
+              <Text style={styles.metaLabel}>Stream</Text>
               <Text style={styles.metaVal}>MLP (Multi-Layer Plastic)</Text>
             </View>
-            <View style={styles.metaRow}>
-              <MapPin size={14} color={colors.textSecondary} />
-              <Text style={styles.metaLabel}>Origin:</Text>
-              <Text style={styles.metaVal}>Shanti Nagar CP-03</Text>
+          </View>
+          <View style={styles.metaRow}>
+            <MapPin size={14} color={colors.textSecondary} />
+            <View style={styles.metaText}>
+              <Text style={styles.metaLabel}>Origin</Text>
+              <Text style={styles.metaVal}>{point}, {ward}</Text>
             </View>
-            <View style={styles.metaRow}>
-              <Calendar size={14} color={colors.textSecondary} />
-              <Text style={styles.metaLabel}>Timestamp:</Text>
+          </View>
+          <View style={styles.metaRow}>
+            <Calendar size={14} color={colors.textSecondary} />
+            <View style={styles.metaText}>
+              <Text style={styles.metaLabel}>Timestamp</Text>
               <Text style={styles.metaVal}>{dateStr}</Text>
             </View>
           </View>
+          <View style={styles.metaRow}>
+            <Copy size={14} color={colors.textSecondary} />
+            <View style={styles.metaText}>
+              <Text style={styles.metaLabel}>Weight</Text>
+              <Text style={styles.metaVal}>{weight} kg</Text>
+            </View>
+          </View>
         </View>
+      </Card>
 
-        {/* Action Buttons */}
-        <View style={styles.buttonsRow}>
-          <TouchableOpacity style={styles.printBtn} onPress={handlePrint} activeOpacity={0.8}>
-            <Printer size={16} color="#1e293b" />
-            <Text style={styles.printBtnText}>Print Tag</Text>
-          </TouchableOpacity>
+      {/* Action Buttons */}
+      <View style={styles.buttonsRow}>
+        <Button
+          title="Print Label"
+          leftIcon={<Printer size={16} color="#ffffff" />}
+          onPress={handlePrint}
+          variant="outline"
+          style={styles.printBtn}
+          textStyle={styles.printBtnText}
+        />
+        <Button
+          title="View Passport"
+          leftIcon={<Eye size={16} color="#ffffff" />}
+          onPress={handleViewPassport}
+          style={styles.viewBtn}
+          textStyle={styles.viewBtnText}
+        />
+      </View>
 
-          <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.8}>
-            <Share2 size={16} color="#ffffff" />
-            <Text style={styles.shareBtnText}>Share</Text>
-          </TouchableOpacity>
-        </View>
-
+      <View style={styles.shareRow}>
         <TouchableOpacity
-          style={styles.doneBtn}
-          onPress={() => router.push('/(worker)/my-collections')}
-          activeOpacity={0.85}
+          style={styles.shareBtn}
+          onPress={handleShare}
+          activeOpacity={0.8}
         >
-          <Text style={styles.doneBtnText}>Done • View Today's Bags</Text>
+          <Share2 size={16} color="#ffffff" />
+          <Text style={styles.shareBtnText}>Share QR</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.downloadBtn}
+          activeOpacity={0.8}
+        >
+          <Download size={16} color="#2563eb" />
+          <Text style={styles.downloadBtnText}>Download Label</Text>
+        </TouchableOpacity>
+      </View>
 
-        <View style={{ height: 24 }} />
-      </ScrollView>
+      <TouchableOpacity
+        style={styles.doneBtn}
+        onPress={() => router.push('/(worker)/my-collections')}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.doneBtnText}>Done • View Today's Bags</Text>
+      </TouchableOpacity>
 
-      <BottomNav />
-    </View>
+      <View style={styles.bottomSpacer} />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.surface,
-  },
-  scroll: {
-    flex: 1,
-    padding: 16,
-  },
   successBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
     backgroundColor: '#ecfdf5',
     borderWidth: 1,
     borderColor: '#a7f3d0',
     borderRadius: 12,
-    padding: 12,
     marginBottom: 16,
+  },
+  successRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   successText: {
     fontSize: 12,
     fontWeight: '700',
     color: '#15803d',
-    flex: 1,
   },
   qrCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
     marginBottom: 16,
+    alignItems: 'center',
+  },
+  qrWrapper: {
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    marginTop: 4,
+    marginBottom: 12,
   },
   metaBox: {
     width: '100%',
     backgroundColor: '#f8faf9',
     borderRadius: 12,
-    padding: 12,
-    marginTop: 16,
-    gap: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  metaText: {
+    gap: 2,
   },
   metaLabel: {
     fontSize: 11,
     color: colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   metaVal: {
     fontSize: 11,
@@ -174,51 +225,77 @@ const styles = StyleSheet.create({
   },
   buttonsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     marginBottom: 12,
   },
   printBtn: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
     backgroundColor: '#ffffff',
-    borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
-    paddingVertical: 14,
   },
   printBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1e293b',
+    color: colors.textPrimary,
+  },
+  viewBtn: {
+    flex: 1,
+    backgroundColor: '#2563eb',
+  },
+  viewBtnText: {
+    color: '#ffffff',
+  },
+  shareRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
   },
   shareBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#2563eb',
-    borderRadius: 12,
-    paddingVertical: 14,
+    gap: 6,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 10,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   shareBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.textPrimary,
+  },
+  downloadBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  downloadBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#2563eb',
   },
   doneBtn: {
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#1a5c38',
-    borderRadius: 14,
-    paddingVertical: 16,
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginHorizontal: 4,
   },
   doneBtnText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
+  },
+  bottomSpacer: {
+    height: 20,
   },
 });

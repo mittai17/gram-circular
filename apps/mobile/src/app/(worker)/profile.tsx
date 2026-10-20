@@ -1,15 +1,12 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { HeaderBar } from '../../components/common/HeaderBar';
-import { BottomNav } from '../../components/common/BottomNav';
+import { Screen } from '../../components/ui/Screen';
+import { Card } from '../../components/ui/Card';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { Button } from '../../components/ui/Button';
+import { USERS_ROSTER } from '../../lib/mock-data';
 import { colors } from '../../theme/colors';
 import {
   Truck,
@@ -20,153 +17,224 @@ import {
   LogOut,
   ChevronRight,
   ShieldCheck,
+  Settings,
+  Bell,
+  Wallet,
+  IdCard,
 } from 'lucide-react-native';
 
-const WORKER_MENU = [
-  { id: 'profile', title: 'My Profile', icon: User, route: null },
-  { id: 'route', title: 'Assigned Route', icon: Navigation, route: '/(worker)/stop-detail' },
-  { id: 'sync', title: 'Sync Data & Storage', icon: RefreshCw, route: '/(worker)/offline-mode', badge: 'SQLite' },
-  { id: 'help', title: 'Help & Field Support', icon: HelpCircle, route: null },
+const WORKER = USERS_ROSTER[0]; // Ramesh K - Collection Worker
+
+const PROFILE_MENU = [
+  { id: 'profile', title: 'My Profile', icon: IdCard, description: 'View & edit personal details' },
+  { id: 'route', title: 'Assigned Route', icon: Navigation, description: 'Route 1 • Shanti Nagar', route: '/(worker)/stop-detail' },
+  { id: 'sync', title: 'Sync Data & Storage', icon: RefreshCw, description: 'SQLite Outbox Queue', route: '/(worker)/offline-mode', badge: 'Pending' },
+  { id: 'help', title: 'Help & Field Support', icon: HelpCircle, description: 'Contact panchayat office' },
+];
+
+const APP_SETTINGS = [
+  { id: 'notifications', title: 'Notifications', icon: Bell, description: 'Collection alerts & reminders', toggle: true },
+  { id: 'offline', title: 'Offline Mode', icon: ShieldCheck, description: 'Cache data when offline', toggle: true },
+  { id: 'units', title: 'Measurement Units', icon: Wallet, description: 'kg / lbs • Metric system' },
+  { id: 'language', title: 'Language', icon: User, description: 'English • தமிழ் • हिंदी' },
 ];
 
 export default function WorkerProfileScreen() {
   const router = useRouter();
 
   return (
-    <View style={styles.screen}>
-      <HeaderBar title="Field Profile" subtitle="Driver ID: GC-FW-104" showBack />
-
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* User Card */}
-        <View style={styles.profileCard}>
+    <Screen
+      title="Worker Profile"
+      subtitle={`ID: GC-FW-104 • ${WORKER.assignedArea}`}
+      showBack
+      showOfflineBanner
+      showBottomNav
+    >
+      {/* User Profile Card */}
+      <Card style={styles.profileCard} padding={20}>
+        <View style={styles.avatarContainer}>
           <View style={styles.avatar}>
-            <Truck size={32} color="#ffffff" />
+            <Truck size={34} color="#ffffff" />
           </View>
-          <Text style={styles.name}>Ramesh K</Text>
-          <Text style={styles.role}>Field Worker • Waste Collector</Text>
-          <View style={styles.vehicleBadge}>
-            <Text style={styles.vehicleText}>Vehicle 1 • TN-29-BA-4821</Text>
-          </View>
+          <StatusBadge variant="success" small style={styles.onlineBadge}>
+            Active
+          </StatusBadge>
         </View>
+        <Text style={styles.name}>{WORKER.name}</Text>
+        <Text style={styles.role}>{WORKER.role}</Text>
+        <View style={styles.vehicleBadge}>
+          <Text style={styles.vehicleText}>
+            Vehicle {WORKER.assignedArea.split(' • ')[0]} • TN-29-BA-4821
+          </Text>
+        </View>
+      </Card>
 
-        {/* Daily Stats */}
-        <View style={styles.statsCard}>
+      {/* Daily Stats */}
+      <Card style={styles.statsCard} padding={16}>
+        <View style={styles.statsRow}>
           <View style={styles.statCol}>
             <Text style={styles.statNum}>104.5</Text>
             <Text style={styles.statLabel}>kg Today</Text>
           </View>
-          <View style={styles.statDiv} />
+          <View style={styles.statDivider} />
           <View style={styles.statCol}>
             <Text style={styles.statNum}>6/6</Text>
             <Text style={styles.statLabel}>Stops Active</Text>
           </View>
-          <View style={styles.statDiv} />
+          <View style={styles.statDivider} />
           <View style={styles.statCol}>
             <Text style={styles.statNum}>100%</Text>
             <Text style={styles.statLabel}>Attendance</Text>
           </View>
         </View>
+      </Card>
 
-        {/* Menu Items */}
-        <View style={styles.menuCard}>
-          {WORKER_MENU.map((item, index) => {
-            const IconComp = item.icon;
-            const isLast = index === WORKER_MENU.length - 1;
+      {/* Menu Options */}
+      <SectionHeader title="Field Options" />
 
-            return (
-              <TouchableOpacity
-                key={item.id}
-                style={[styles.menuItem, !isLast && styles.menuItemBorder]}
-                onPress={() => {
-                  if (item.route) {
-                    router.push(item.route as any);
-                  } else {
-                    Alert.alert(item.title, `${item.title} opened.`);
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={styles.menuLeft}>
-                  <View style={styles.menuIconBox}>
-                    <IconComp size={18} color="#2563eb" />
-                  </View>
+      <Card style={styles.menuCard} padding={0}>
+        {PROFILE_MENU.map((item, index) => {
+          const IconComp = item.icon;
+          const isLast = index === PROFILE_MENU.length - 1;
+
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.menuItem, !isLast && styles.menuItemBorder]}
+              onPress={() => {
+                if (item.route) {
+                  router.push(item.route as any);
+                } else {
+                  Alert.alert(item.title, `${item.title} opened.`);
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuLeft}>
+                <View style={[styles.menuIconBox, { backgroundColor: '#eff6ff' }]}>
+                  <IconComp size={18} color="#2563eb" />
+                </View>
+                <View style={styles.menuTextCol}>
                   <Text style={styles.menuTitle}>{item.title}</Text>
+                  <Text style={styles.menuDesc}>{item.description}</Text>
                 </View>
+              </View>
+              <View style={styles.menuRight}>
+                {item.badge && (
+                  <View style={styles.badgePill}>
+                    <Text style={styles.badgeText}>{item.badge}</Text>
+                  </View>
+                )}
+                <ChevronRight size={16} color={colors.textSecondary} />
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </Card>
 
-                <View style={styles.menuRight}>
-                  {item.badge && (
-                    <View style={styles.badgePill}>
-                      <Text style={styles.badgeText}>{item.badge}</Text>
-                    </View>
-                  )}
-                  <ChevronRight size={16} color={colors.textSecondary} />
+      {/* App Settings */}
+      <SectionHeader title="App Settings" />
+
+      <Card style={styles.settingsCard} padding={0}>
+        {APP_SETTINGS.map((item, index) => {
+          const IconComp = item.icon;
+          const isLast = index === APP_SETTINGS.length - 1;
+
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.menuItem, !isLast && styles.menuItemBorder]}
+              onPress={() => Alert.alert(item.title, `${item.title} settings opened.`)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuLeft}>
+                <View style={[styles.menuIconBox, { backgroundColor: '#f1f5f9' }]}>
+                  <IconComp size={18} color={colors.textSecondary} />
                 </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                <View style={styles.menuTextCol}>
+                  <Text style={styles.menuTitle}>{item.title}</Text>
+                  <Text style={styles.menuDesc}>{item.description}</Text>
+                </View>
+              </View>
+              {item.toggle !== undefined && (
+                <View style={styles.toggleContainer}>
+                  <TouchableOpacity
+                    style={[styles.toggleTrack, { backgroundColor: item.toggle ? '#2563eb' : '#e2e8f0' }]}
+                    activeOpacity={0.8}
+                  >
+                    {item.toggle && (
+                      <View style={styles.toggleThumb}>
+                        <View style={styles.toggleCheck} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+              {!item.toggle && (
+                <ChevronRight size={16} color={colors.textSecondary} />
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </Card>
 
-        {/* Logout Button */}
-        <TouchableOpacity
-          style={styles.logoutBtn}
-          onPress={() => router.push('/')}
-          activeOpacity={0.8}
-        >
-          <LogOut size={16} color="#dc2626" />
-          <Text style={styles.logoutText}>Return to Demo Selector</Text>
-        </TouchableOpacity>
+      {/* Logout Button */}
+      <Button
+        title="Return to Demo Selector"
+        leftIcon={<LogOut size={16} color="#ffffff" />}
+        fullWidth
+        variant="destructive"
+        onPress={() => router.push('/')}
+        style={styles.logoutBtn}
+        textStyle={styles.logoutBtnText}
+      />
 
-        <View style={{ height: 24 }} />
-      </ScrollView>
-
-      <BottomNav />
-    </View>
+      <View style={styles.bottomSpacer} />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.surface,
-  },
-  scroll: {
-    flex: 1,
-    padding: 16,
-  },
   profileCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 14,
+    marginBottom: 16,
+    backgroundColor: '#ffffff',
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: 12,
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: '#2563eb',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+  },
+  onlineBadge: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    backgroundColor: '#10b981',
   },
   name: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
     color: colors.textPrimary,
   },
   role: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textSecondary,
     marginTop: 2,
+    fontWeight: '600',
   },
   vehicleBadge: {
     backgroundColor: '#eff6ff',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginTop: 10,
   },
   vehicleText: {
     fontSize: 11,
@@ -174,20 +242,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   statsCard: {
-    flexDirection: 'row',
+    marginBottom: 16,
     backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 14,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   statCol: {
-    flex: 1,
     alignItems: 'center',
+    flex: 1,
   },
   statNum: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '800',
     color: '#2563eb',
   },
@@ -196,16 +263,17 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  statDiv: {
+  statDivider: {
     width: 1,
     backgroundColor: colors.border,
   },
   menuCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
     marginBottom: 16,
+    backgroundColor: '#ffffff',
+  },
+  settingsCard: {
+    marginBottom: 16,
+    backgroundColor: '#ffffff',
   },
   menuItem: {
     flexDirection: 'row',
@@ -222,19 +290,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
   },
   menuIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#eff6ff',
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  menuTextCol: {
+    gap: 2,
+  },
   menuTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.textPrimary,
+  },
+  menuDesc: {
+    fontSize: 11,
+    color: colors.textMuted,
   },
   menuRight: {
     flexDirection: 'row',
@@ -243,29 +318,47 @@ const styles = StyleSheet.create({
   },
   badgePill: {
     backgroundColor: '#e8f5e9',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
   badgeText: {
     fontSize: 10,
     color: '#15803d',
     fontWeight: '700',
   },
-  logoutBtn: {
-    flexDirection: 'row',
+  toggleContainer: {
+    alignItems: 'center',
+  },
+  toggleTrack: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#fef2f2',
-    borderRadius: 12,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: '#fecaca',
   },
-  logoutText: {
-    color: '#dc2626',
-    fontSize: 13,
-    fontWeight: '700',
+  toggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#ffffff',
+  },
+  toggleCheck: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#2563eb',
+    marginTop: 3,
+    marginLeft: 3,
+  },
+  logoutBtn: {
+    backgroundColor: '#dc2626',
+    marginBottom: 8,
+  },
+  logoutBtnText: {
+    color: '#ffffff',
+  },
+  bottomSpacer: {
+    height: 20,
   },
 });

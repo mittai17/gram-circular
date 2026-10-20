@@ -1,14 +1,15 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
-import { HeaderBar } from '../../components/common/HeaderBar';
-import { BottomNav } from '../../components/common/BottomNav';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Screen } from '../../components/ui/Screen';
+import { Card } from '../../components/ui/Card';
+import { StatCard } from '../../components/ui/StatCard';
+import { Button } from '../../components/ui/Button';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 import { colors } from '../../theme/colors';
+import { VILLAGES_DATA } from '../../lib/mock-data';
+import { VillageSummary } from '../../types';
 import {
   TrendingUp,
   MapPin,
@@ -17,107 +18,147 @@ import {
   Leaf,
   Users,
   ChevronRight,
+  Clock,
 } from 'lucide-react-native';
 
-const WARDS = [
-  { id: 'w-1', name: 'Ward 1 (Temple & Main Road)', totalKg: 94.2, mlpKg: 28.5, rank: '1st' },
-  { id: 'w-2', name: 'Ward 2 (Gandhi Street)', totalKg: 86.0, mlpKg: 24.0, rank: '2nd' },
-  { id: 'w-3', name: 'Ward 3 (School Junction)', totalKg: 78.5, mlpKg: 20.4, rank: '3rd' },
-  { id: 'w-4', name: 'Ward 4 (Market & Colony)', totalKg: 61.8, mlpKg: 13.5, rank: '4th' },
-];
+const CITIZEN_PRIMARY = colors.roles.citizen.primary; // #d97706
+
+const village = VILLAGES_DATA[0];
 
 export default function CitizenVillageProgressScreen() {
+  const router = useRouter();
+
   return (
-    <View style={styles.screen}>
-      <HeaderBar title="Village Progress" subtitle="Shanti Nagar Cleanliness Drive" showBack />
-
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* District Rank Hero */}
-        <View style={styles.rankCard}>
-          <View style={styles.rankBadge}>
-            <Award size={22} color="#ffffff" />
-          </View>
-          <View style={styles.rankMeta}>
-            <Text style={styles.rankTitle}>Rank #2 in District</Text>
-            <Text style={styles.rankSub}>Kaveripattinam Block Clean Village Trophy</Text>
-          </View>
+    <Screen title="Village Progress" subtitle="Shanti Nagar Cleanliness Drive">
+      {/* District Rank Hero */}
+      <Card padding={14} style={styles.rankCard}>
+        <View style={styles.rankBadge}>
+          <Award size={22} color="#ffffff" />
         </View>
-
-        {/* 2 Main Metric Cards */}
-        <View style={styles.kpiRow}>
-          <View style={styles.kpiCard}>
-            <Text style={styles.kpiLabel}>Total Waste Collected</Text>
-            <Text style={styles.kpiVal}>320.5 kg</Text>
-            <View style={styles.trendRow}>
-              <TrendingUp size={12} color="#15803d" />
-              <Text style={styles.trendText}>+12% vs last month</Text>
-            </View>
-          </View>
-
-          <View style={[styles.kpiCard, { backgroundColor: '#f0fdf4' }]}>
-            <Text style={[styles.kpiLabel, { color: '#166534' }]}>MLP Recycled</Text>
-            <Text style={[styles.kpiVal, { color: '#14532d' }]}>86.4 kg</Text>
-            <View style={styles.trendRow}>
-              <TrendingUp size={12} color="#15803d" />
-              <Text style={styles.trendText}>+18% segregation</Text>
-            </View>
-          </View>
+        <View style={styles.rankMeta}>
+          <Text style={styles.rankTitle}>Rank #2 in District</Text>
+          <Text style={styles.rankSub}>Kaveripattinam Block Clean Village Trophy</Text>
         </View>
+        <View style={styles.rankChip}>
+          <TrendingUp size={12} color="#ffffff" />
+          <Text style={styles.rankChipText}>+12% vs last month</Text>
+        </View>
+      </Card>
 
-        {/* Ward Breakdown Table */}
-        <Text style={styles.sectionHeader}>Ward-by-Ward Segregation Leaderboard</Text>
+      {/* Main Metrics */}
+      <View style={styles.kpiRow}>
+        <StatCard
+          value="320.5 kg"
+          label="Total Waste Collected"
+          subtext="This month • All streams"
+          icon={<Layers size={18} color="#1a5c38" />}
+          iconBg="#f0fdf4"
+          iconColor="#166534"
+          trend="+12%"
+          trendPositive
+        />
+        <StatCard
+          value="86.4 kg"
+          label="MLP Diverted"
+          subtext="Multi-layer plastic kept out of landfill"
+          icon={<Leaf size={18} color="#15803d" />}
+          iconBg="#ecfdf5"
+          iconColor="#15803d"
+          trend="+18%"
+          trendPositive
+        />
+      </View>
 
-        {WARDS.map((w) => (
-          <View key={w.id} style={styles.wardCard}>
-            <View style={styles.wardRankBadge}>
-              <Text style={styles.wardRankText}>{w.rank}</Text>
+      {/* Village Leaderboard */}
+      <SectionHeader
+        title="Village Leaderboard"
+        subtitle="Monthly segregation by village"
+        viewAllLabel="See All"
+        onViewAll={() => router.push('/(citizen)/village-progress')}
+      />
+      <View style={styles.leaderboardList}>
+        {(VILLAGES_DATA as VillageSummary[]).map((v) => (
+          <TouchableOpacity
+            key={v.id}
+            style={styles.leaderboardCard}
+            onPress={() => {}}
+            activeOpacity={0.85}
+          >
+            <View style={styles.leaderboardRow}>
+              <View style={styles.rankBadgeInner}>
+                <Text style={styles.rankText}>{getRankEmoji(VILLAGES_DATA.indexOf(v) + 1)}</Text>
+              </View>
+              <View style={styles.leaderboardMeta}>
+                <Text style={styles.leaderboardName}>{v.name}</Text>
+                <Text style={styles.leaderboardSub}>
+                  {v.wardCount} wards • {v.collectionPointsCount} points
+                </Text>
+              </View>
+              <View style={styles.leaderboardValues}>
+                <Text style={styles.leaderboardValue}>{v.monthlyTotalKg} kg</Text>
+                <Text style={styles.leaderboardValueLabel}>Total</Text>
+                <Text style={[styles.leaderboardValue, { color: CITIZEN_PRIMARY }]}>{v.monthlyMlpKg} kg</Text>
+                <Text style={styles.leaderboardValueLabel}>MLP</Text>
+              </View>
             </View>
-
-            <View style={styles.wardMeta}>
-              <Text style={styles.wardName}>{w.name}</Text>
-              <Text style={styles.wardKg}>
-                {w.totalKg} kg Total • <Text style={{ color: '#15803d', fontWeight: '700' }}>{w.mlpKg} kg MLP</Text>
+            <View style={styles.growthRow}>
+              <TrendingUp size={10} color={v.growthPercentage >= 0 ? '#15803d' : '#b91c1c'} />
+              <Text style={[styles.growthText, { color: v.growthPercentage >= 0 ? '#15803d' : '#b91c1c' }]}>
+                {v.growthPercentage >= 0 ? '+' : ''}{v.growthPercentage}% vs last month
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
+      </View>
 
-        {/* Community Milestone */}
-        <View style={styles.milestoneCard}>
+      {/* Community Impact */}
+      <SectionHeader title="Community Impact" subtitle="Shanti Nagar milestones" />
+      <View style={styles.impactRow}>
+        <Card padding={14} style={styles.impactCard}>
+          <Text style={styles.impactValue}>100 kg</Text>
+          <Text style={styles.impactLabel}>MLP Target</Text>
+          <Text style={styles.impactSub}>13.6 kg remaining</Text>
+        </Card>
+        <Card padding={14} style={styles.impactCard}>
+          <Text style={styles.impactValue}>28</Text>
+          <Text style={styles.impactLabel}>Households</Text>
+          <Text style={styles.impactSub}>Actively segregating</Text>
+        </Card>
+      </View>
+
+      {/* Next Milestone */}
+      <Card padding={14} style={styles.milestoneCard}>
+        <View style={styles.milestoneRow}>
           <Leaf size={20} color="#15803d" />
           <View style={styles.milestoneMeta}>
             <Text style={styles.milestoneTitle}>Next Milestone: 100 kg MLP Target</Text>
             <Text style={styles.milestoneSub}>
-              Only 13.6 kg left to unlock community solar garden streetlights grant!
+              Unlocks community solar garden streetlights grant!
             </Text>
           </View>
+          <ChevronRight size={16} color={colors.textMuted} />
         </View>
-
-        <View style={{ height: 24 }} />
-      </ScrollView>
-
-      <BottomNav />
-    </View>
+      </Card>
+    </Screen>
   );
 }
 
+function getRankEmoji(rank: number): string {
+  switch (rank) {
+    case 1: return '🥇';
+    case 2: return '🥈';
+    case 3: return '🥉';
+    default: return String(rank);
+  }
+}
+
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.surface,
-  },
-  scroll: {
-    flex: 1,
-    padding: 16,
-  },
   rankCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
     backgroundColor: '#1a5c38',
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 14,
   },
   rankBadge: {
     width: 44,
@@ -140,83 +181,125 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
+  rankChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  rankChipText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
+  },
   kpiRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     marginBottom: 16,
   },
-  kpiCard: {
-    flex: 1,
+  leaderboardList: {
+    gap: 8,
+  },
+  leaderboardCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
+    padding: 12,
   },
-  kpiLabel: {
-    fontSize: 11,
+  leaderboardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  rankBadgeInner: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rankText: {
+    fontSize: 13,
+    fontWeight: '800',
     color: colors.textSecondary,
-    fontWeight: '600',
   },
-  kpiVal: {
-    fontSize: 22,
+  leaderboardMeta: {
+    flex: 1,
+  },
+  leaderboardName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  leaderboardSub: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
+  leaderboardValues: {
+    alignItems: 'flex-end',
+    gap: 2,
+  },
+  leaderboardValue: {
+    fontSize: 14,
     fontWeight: '800',
     color: colors.textPrimary,
-    marginTop: 4,
   },
-  trendRow: {
+  leaderboardValueLabel: {
+    fontSize: 9,
+    color: colors.textMuted,
+  },
+  growthRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     marginTop: 6,
   },
-  trendText: {
+  growthText: {
     fontSize: 10,
-    color: '#15803d',
     fontWeight: '700',
   },
-  sectionHeader: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 10,
-  },
-  wardCard: {
+  impactRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 12,
+    gap: 10,
+    marginBottom: 14,
+  },
+  impactCard: {
+    flex: 1,
+    backgroundColor: '#f8faf9',
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 8,
-  },
-  wardRankBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#e8f5e9',
+    padding: 12,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  wardRankText: {
-    fontSize: 12,
+  impactValue: {
+    fontSize: 20,
     fontWeight: '800',
-    color: '#1a5c38',
-  },
-  wardMeta: {
-    flex: 1,
-  },
-  wardName: {
-    fontSize: 13,
-    fontWeight: '700',
     color: colors.textPrimary,
   },
-  wardKg: {
-    fontSize: 11,
+  impactLabel: {
+    fontSize: 12,
+    fontWeight: '700',
     color: colors.textSecondary,
+    marginTop: 4,
+  },
+  impactSub: {
+    fontSize: 10,
+    color: colors.textMuted,
     marginTop: 2,
+    textAlign: 'center',
   },
   milestoneCard: {
     flexDirection: 'row',
@@ -227,18 +310,23 @@ const styles = StyleSheet.create({
     borderColor: '#a7f3d0',
     borderRadius: 14,
     padding: 14,
-    marginTop: 8,
+  },
+  milestoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
   },
   milestoneMeta: {
     flex: 1,
   },
   milestoneTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
     color: '#15803d',
   },
   milestoneSub: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#166534',
     marginTop: 2,
   },

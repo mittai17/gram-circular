@@ -1,109 +1,151 @@
 import React from 'react';
 import {
-  View,
-  Text,
   ScrollView,
-  TouchableOpacity,
   StyleSheet,
-  Alert,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { HeaderBar } from '../../components/common/HeaderBar';
 import { BottomNav } from '../../components/common/BottomNav';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { StatCard } from '../../components/ui/StatCard';
 import { MiniBarChart } from '../../components/charts/MiniBarChart';
 import { colors } from '../../theme/colors';
-import {
-  BarChart2,
-  ArrowUpRight,
-  Download,
-  Leaf,
-  Layers,
-  Sparkles,
-} from 'lucide-react-native';
+import { ArrowUpRight, CloudDownload, Leaf } from 'lucide-react-native';
 
-const MONTHLY_DATA = [
-  { label: 'Aug', value: 280 },
-  { label: 'Sep', value: 340 },
+const PRIMARY = colors.roles.buyer.primary; // #7c3aed
+
+const MONTHLY_SPEND = [
+  { label: 'Aug', value: 38000, highlight: false },
+  { label: 'Sep', value: 42000, highlight: false },
+  { label: 'Oct', value: 48500, highlight: true },
+];
+
+const MONTHLY_VOLUME = [
+  { label: 'Aug', value: 320, highlight: false },
+  { label: 'Sep', value: 380, highlight: false },
   { label: 'Oct', value: 412, highlight: true },
 ];
 
+interface SupplierBreakdown {
+  name: string;
+  material: string;
+  kg: number;
+  spend: number;
+  share: number;
+  color: string;
+}
+
+const SUPPLIERS: SupplierBreakdown[] = [
+  { name: 'Kaveripattinam Block MRF', material: 'MLP', kg: 288, spend: 10944, share: 70, color: '#15803d' },
+  { name: 'Tidel MRF Center', material: 'HDPE', kg: 74, spend: 3256, share: 18, color: '#2563eb' },
+  { name: 'Shanti Nagar Aggregators', material: 'LDPE', kg: 50, spend: 1800, share: 12, color: '#0d9488' },
+];
+
+const totalSpend = MONTHLY_SPEND.reduce((acc, m) => acc + m.value, 0);
+const totalVolume = MONTHLY_VOLUME.reduce((acc, m) => acc + m.value, 0);
+
 export default function BuyerProcurementChartScreen() {
   const handleDownload = () => {
-    Alert.alert('Download Analytics', 'Procurement & ESG Compliance Report (Oct 2026) saved to PDF.');
+    // eslint-disable-next-line no-alert
+    alert('Procurement & ESG Compliance Report (Oct 2026) saved to PDF.');
   };
 
   return (
     <View style={styles.screen}>
-      <HeaderBar title="Procurement Analytics" subtitle="GreenCycle Monthly Metrics" showBack />
+      <HeaderBar title="Procurement Analytics" subtitle="Monthly Spend & Volume Trends" showBack />
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Hero Card */}
-        <View style={styles.heroCard}>
-          <Text style={styles.heroTitle}>Monthly Recycled Procurement</Text>
-          <View style={styles.heroRow}>
-            <Text style={styles.heroKg}>412</Text>
-            <Text style={styles.heroUnit}>kg total</Text>
-            <View style={styles.trendBadge}>
-              <ArrowUpRight size={14} color="#15803d" />
-              <Text style={styles.trendText}>+18% MoM</Text>
-            </View>
-          </View>
-
-          {/* Bar Chart */}
-          <MiniBarChart
-            data={MONTHLY_DATA}
-            height={130}
-            barColor="#7c3aed"
-            highlightColor="#6d28d9"
-            unit="kg"
+        {/* Hero Metrics */}
+        <View style={styles.statGrid}>
+          <StatCard
+            value={`₹${totalSpend.toLocaleString()}`}
+            label="Monthly Spend"
+            subtext="+18% vs last month"
+            icon={<ArrowUpRight size={18} color="#15803d" />}
+            iconBg="#ecfdf5"
+            iconColor="#15803d"
+            trend="+18%"
+            trendPositive
+            style={{ width: '48%' }}
+          />
+          <StatCard
+            value={`${totalVolume} kg`}
+            label="Monthly Volume"
+            subtext="Recycled material procured"
+            icon={<Leaf size={18} color="#15803d" />}
+            iconBg="#ecfdf5"
+            iconColor="#15803d"
+            style={{ width: '48%' }}
           />
         </View>
 
-        {/* Polymer Breakdown Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Material Stream Distribution</Text>
+        {/* Monthly Spend Chart */}
+        <SectionHeader title="Monthly Procurement Spend" subtitle="₹ spent per month" />
+        <Card style={styles.chartCard}>
+          <MiniBarChart
+            data={MONTHLY_SPEND}
+            height={140}
+            barColor={PRIMARY}
+            highlightColor="#6d28d9"
+            unit="₹"
+          />
+        </Card>
 
-          <View style={styles.streamRow}>
-            <View style={styles.streamLeft}>
-              <View style={[styles.streamDot, { backgroundColor: '#1a5c38' }]} />
-              <Text style={styles.streamName}>Multi-Layer Plastic (MLP)</Text>
-            </View>
-            <Text style={styles.streamVal}>288 kg (70%)</Text>
-          </View>
+        {/* Monthly Volume Chart */}
+        <SectionHeader title="Volume Trends" subtitle="kg procured per month" />
+        <Card style={styles.chartCard}>
+          <MiniBarChart
+            data={MONTHLY_VOLUME}
+            height={140}
+            barColor="#1a5c38"
+            highlightColor="#0f3d24"
+            unit="kg"
+          />
+        </Card>
 
-          <View style={styles.streamRow}>
-            <View style={styles.streamLeft}>
-              <View style={[styles.streamDot, { backgroundColor: '#0284c7' }]} />
-              <Text style={styles.streamName}>Rigid HDPE</Text>
-            </View>
-            <Text style={styles.streamVal}>74 kg (18%)</Text>
-          </View>
-
-          <View style={styles.streamRow}>
-            <View style={styles.streamLeft}>
-              <View style={[styles.streamDot, { backgroundColor: '#0d9488' }]} />
-              <Text style={styles.streamName}>Film LDPE</Text>
-            </View>
-            <Text style={styles.streamVal}>50 kg (12%)</Text>
-          </View>
+        {/* Supplier Breakdown */}
+        <SectionHeader title="Supplier Breakdown" subtitle="Share of monthly procurement" />
+        <View style={styles.supplierList}>
+          {SUPPLIERS.map((s) => (
+            <TouchableOpacity
+              key={s.name}
+              style={styles.supplierRow}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.supplierDot, { backgroundColor: s.color }]} />
+              <View style={styles.supplierInfo}>
+                <Text style={styles.supplierName}>{s.name}</Text>
+                <Text style={styles.supplierMeta}>
+                  {s.material} • {s.kg.toLocaleString()} kg
+                </Text>
+              </View>
+              <View style={styles.supplierValues}>
+                <Text style={styles.supplierSpend}>₹{s.spend.toLocaleString()}</Text>
+                <Text style={[styles.supplierShare, { color: s.color }]}>
+                  {s.share}%
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Environmental Impact Summary */}
-        <View style={styles.impactCard}>
-          <View style={styles.impactIcon}>
-            <Leaf size={22} color="#15803d" />
-          </View>
-          <View style={styles.impactMeta}>
-            <Text style={styles.impactTitle}>103 kg CO₂ Offset Equivalent</Text>
-            <Text style={styles.impactSub}>
-              Direct virgin plastic substitution verified via blockchain-ready traceability records.
-            </Text>
-          </View>
-        </View>
-
-        {/* Download Button */}
-        <TouchableOpacity style={styles.downloadBtn} onPress={handleDownload} activeOpacity={0.85}>
-          <Download size={18} color="#ffffff" />
-          <Text style={styles.downloadBtnText}>Download Procurement Audit Report</Text>
+        {/* Download */}
+        <TouchableOpacity style={styles.downloadPressable} onPress={handleDownload} activeOpacity={0.85}>
+          <Card style={{ ...styles.downloadCard, backgroundColor: PRIMARY }}>
+            <View style={styles.downloadRow}>
+              <View style={styles.downloadText}>
+                <Text style={styles.downloadTitle}>Download Procurement Audit Report</Text>
+                <Text style={styles.downloadSub}>
+                  Monthly spend, volume trends & ESG compliance summary
+                </Text>
+              </View>
+              <CloudDownload size={20} color="#ffffff" />
+            </View>
+          </Card>
         </TouchableOpacity>
 
         <View style={{ height: 24 }} />
@@ -123,137 +165,93 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  heroCard: {
+  statGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 16,
+  },
+  chartCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: 14,
+    padding: 14,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: 16,
   },
-  heroTitle: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '600',
+  supplierList: {
+    marginBottom: 16,
   },
-  heroRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginTop: 4,
-    marginBottom: 10,
-  },
-  heroKg: {
-    fontSize: 34,
-    fontWeight: '900',
-    color: colors.textPrimary,
-  },
-  heroUnit: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginLeft: 6,
-    fontWeight: '500',
-  },
-  trendBadge: {
+  supplierRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#ecfdf5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginLeft: 'auto',
-  },
-  trendText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#15803d',
-  },
-  card: {
+    justifyContent: 'space-between',
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12,
+    padding: 12,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 16,
+    marginBottom: 8,
   },
-  cardTitle: {
+  supplierDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  supplierInfo: {
+    flex: 1,
+    marginHorizontal: 10,
+  },
+  supplierName: {
     fontSize: 13,
     fontWeight: '700',
     color: colors.textPrimary,
-    marginBottom: 12,
   },
-  streamRow: {
+  supplierMeta: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  supplierValues: {
+    alignItems: 'flex-end',
+  },
+  supplierSpend: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  supplierShare: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  downloadPressable: {
+    width: '100%',
+  },
+  downloadCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 0.8,
-    borderBottomColor: colors.borderLight,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 0,
   },
-  streamLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  streamDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  streamName: {
-    fontSize: 12,
-    color: colors.textPrimary,
-  },
-  streamVal: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  impactCard: {
+  downloadRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#ecfdf5',
-    borderWidth: 1,
-    borderColor: '#a7f3d0',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 20,
-  },
-  impactIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  impactMeta: {
     flex: 1,
   },
-  impactTitle: {
+  downloadText: {
+    flex: 1,
+  },
+  downloadTitle: {
+    color: '#ffffff',
     fontSize: 13,
     fontWeight: '700',
-    color: '#15803d',
   },
-  impactSub: {
-    fontSize: 11,
-    color: '#166534',
+  downloadSub: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 10,
     marginTop: 2,
-    lineHeight: 15,
-  },
-  downloadBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#7c3aed',
-    borderRadius: 14,
-    paddingVertical: 16,
-  },
-  downloadBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

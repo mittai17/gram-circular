@@ -1,15 +1,10 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { HeaderBar } from '../../components/common/HeaderBar';
+import { OfflineBanner } from '../../components/common/OfflineBanner';
 import { BottomNav } from '../../components/common/BottomNav';
+import { Card, Button, StatusBadge, SectionHeader } from '../../components/ui';
 import { colors } from '../../theme/colors';
 import {
   ShieldCheck,
@@ -20,31 +15,33 @@ import {
   LogOut,
   ChevronRight,
   Building,
+  Truck,
+  Clock,
+  TrendingUp,
   CheckCircle2,
 } from 'lucide-react-native';
 
+interface AuditEntry {
+  id: string;
+  action: string;
+  entity: string;
+  timestamp: string;
+  status: 'success' | 'warning' | 'info';
+}
+
 const MENU_ITEMS = [
-  {
-    id: 'edit',
-    title: 'Edit Profile',
-    icon: User,
-  },
-  {
-    id: 'notif',
-    title: 'Notifications',
-    icon: Bell,
-    badge: '3 New',
-  },
-  {
-    id: 'settings',
-    title: 'App Settings',
-    icon: Settings,
-  },
-  {
-    id: 'help',
-    title: 'Help & Support',
-    icon: HelpCircle,
-  },
+  { id: 'edit', title: 'Edit Profile', icon: User },
+  { id: 'notif', title: 'Notifications', icon: Bell, badge: '3 New' },
+  { id: 'settings', title: 'App Settings', icon: Settings },
+  { id: 'help', title: 'Help & Support', icon: HelpCircle },
+];
+
+const AUDIT_HISTORY: AuditEntry[] = [
+  { id: 'a-1', action: 'Role access granted', entity: 'Panchayat Admin Dashboard', timestamp: '19 Oct 2026, 8:15 AM', status: 'success' },
+  { id: 'a-2', action: 'Route optimization viewed', entity: 'Vehicle TN-29-BA-4821', timestamp: '18 Oct 2026, 2:30 PM', status: 'success' },
+  { id: 'a-3', action: 'Compliance report downloaded', entity: 'Mass-Balance Ledger', timestamp: '17 Oct 2026, 4:15 PM', status: 'success' },
+  { id: 'a-4', action: 'User role updated', entity: 'Ramesh K → Collection Worker', timestamp: '16 Oct 2026, 11:00 AM', status: 'warning' },
+  { id: 'a-5', action: 'Village status changed', entity: 'Kaveri Nagar → Active', timestamp: '15 Oct 2026, 9:00 AM', status: 'info' },
 ];
 
 export default function AdminProfileScreen() {
@@ -57,10 +54,11 @@ export default function AdminProfileScreen() {
   return (
     <View style={styles.screen}>
       <HeaderBar title="Admin Profile" subtitle="Account & Configuration" showBack />
+      <OfflineBanner />
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* User Card */}
-        <View style={styles.profileHeaderCard}>
+        {/* Profile Header */}
+        <Card padding={20} shadow="md" style={styles.profileHeaderCard}>
           <View style={styles.avatar}>
             <ShieldCheck size={36} color="#ffffff" />
           </View>
@@ -70,32 +68,46 @@ export default function AdminProfileScreen() {
             <Building size={12} color="#15803d" />
             <Text style={styles.deptText}>Kaveripattinam Block Union</Text>
           </View>
+          <Text style={styles.roleCaption}>Panchayat Admin • System Administrator</Text>
+        </Card>
+
+        {/* Quick Stats */}
+        <View style={styles.statsRow}>
+          <Card padding={14} shadow="none" style={styles.statCard}>
+            <View style={styles.statContent}>
+              <View style={styles.statIcon}><ShieldCheck size={18} color={colors.primary} /></View>
+              <View style={styles.statText}>
+                <Text style={styles.statValue}>28</Text>
+                <Text style={styles.statLabel}>Villages</Text>
+              </View>
+            </View>
+          </Card>
+          <Card padding={14} shadow="none" style={styles.statCard}>
+            <View style={styles.statContent}>
+              <View style={[styles.statIcon, { backgroundColor: '#eff6ff' }]}><Truck size={18} color="#2563eb" /></View>
+              <View style={styles.statText}>
+                <Text style={styles.statValue}>96</Text>
+                <Text style={styles.statLabel}>Collection Points</Text>
+              </View>
+            </View>
+          </Card>
+          <Card padding={14} shadow="none" style={styles.statCard}>
+            <View style={styles.statContent}>
+              <View style={[styles.statIcon, { backgroundColor: '#ecfdf5' }]}><CheckCircle2 size={18} color="#10b981" /></View>
+              <View style={styles.statText}>
+                <Text style={styles.statValue}>100%</Text>
+                <Text style={styles.statLabel}>EPR Compliant</Text>
+              </View>
+            </View>
+          </Card>
         </View>
 
-        {/* Quick Stats Summary */}
-        <View style={styles.statsSummaryCard}>
-          <View style={styles.statCol}>
-            <Text style={styles.statNum}>28</Text>
-            <Text style={styles.statLbl}>Villages</Text>
-          </View>
-          <View style={styles.statDiv} />
-          <View style={styles.statCol}>
-            <Text style={styles.statNum}>96</Text>
-            <Text style={styles.statLbl}>Collection CPs</Text>
-          </View>
-          <View style={styles.statDiv} />
-          <View style={styles.statCol}>
-            <Text style={styles.statNum}>100%</Text>
-            <Text style={styles.statLbl}>EPR Compliant</Text>
-          </View>
-        </View>
-
-        {/* Menu Items */}
-        <View style={styles.menuCard}>
+        {/* Settings Menu */}
+        <SectionHeader title="Settings" subtitle="Configure your experience" />
+        <Card padding={0} shadow="md">
           {MENU_ITEMS.map((item, index) => {
             const IconComp = item.icon;
             const isLast = index === MENU_ITEMS.length - 1;
-
             return (
               <TouchableOpacity
                 key={item.id}
@@ -105,29 +117,67 @@ export default function AdminProfileScreen() {
               >
                 <View style={styles.menuLeft}>
                   <View style={styles.menuIconBox}>
-                    <IconComp size={18} color="#1a5c38" />
+                    <IconComp size={18} color={colors.primary} />
                   </View>
                   <Text style={styles.menuTitle}>{item.title}</Text>
                 </View>
-
                 <View style={styles.menuRight}>
                   {item.badge && (
                     <View style={styles.badgePill}>
                       <Text style={styles.badgeText}>{item.badge}</Text>
                     </View>
                   )}
-                  <ChevronRight size={16} color={colors.textSecondary} />
+                  <ChevronRight size={16} color={colors.textMuted} />
                 </View>
               </TouchableOpacity>
             );
           })}
-        </View>
+        </Card>
 
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-          <LogOut size={16} color="#dc2626" />
-          <Text style={styles.logoutText}>Return to Demo Selector</Text>
-        </TouchableOpacity>
+        {/* Audit History Preview */}
+        <SectionHeader title="Recent Audit History" subtitle="System access & activity log" />
+        <Card padding={0} shadow="md">
+          {AUDIT_HISTORY.map((entry) => {
+            const statusConfig: Record<string, { bg: string; color: string; label: string }> = {
+              success: { bg: '#ecfdf5', color: '#15803d', label: 'Success' },
+              warning: { bg: '#fef3c7', color: '#b45309', label: 'Warning' },
+              info: { bg: '#eff6ff', color: '#1d4ed8', label: 'Info' },
+            };
+            const cfg = statusConfig[entry.status];
+            return (
+              <TouchableOpacity key={entry.id} style={styles.auditRow} activeOpacity={0.8}>
+                <View style={styles.auditIcon}>
+                  <Clock size={16} color={colors.textMuted} />
+                </View>
+                <View style={styles.auditContent}>
+                  <Text style={styles.auditAction}>{entry.action}</Text>
+                  <View style={styles.auditMetaRow}>
+                    <Text style={styles.auditEntity}>{entry.entity}</Text>
+                    <Text style={styles.auditTime}>{entry.timestamp}</Text>
+                  </View>
+                </View>
+                <StatusBadge variant={entry.status as any} small>
+                  {cfg.label}
+                </StatusBadge>
+              </TouchableOpacity>
+            );
+          })}
+          <View style={styles.divider} />
+          <TouchableOpacity style={styles.viewAllRow} onPress={() => Alert.alert('Audit Log', 'Full audit history coming soon.')}>
+            <Text style={styles.viewAllText}>View Full Audit Trail</Text>
+            <ChevronRight size={14} color={colors.textMuted} />
+          </TouchableOpacity>
+        </Card>
+
+        {/* Logout */}
+        <Button
+          title="Return to Demo Selector"
+          variant="destructive"
+          fullWidth
+          style={{ marginTop: 16 }}
+          onPress={handleLogout}
+          leftIcon={<LogOut size={16} color="#dc2626" />}
+        />
 
         <View style={{ height: 24 }} />
       </ScrollView>
@@ -147,30 +197,24 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   profileHeaderCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 14,
   },
   avatar: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#1a5c38',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   name: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
     color: colors.textPrimary,
   },
   email: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -189,39 +233,47 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#15803d',
   },
-  statsSummaryCard: {
+  roleCaption: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 6,
+    fontWeight: '600',
+  },
+  statsRow: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
+    gap: 10,
     marginBottom: 14,
   },
-  statCol: {
+  statCard: {
     flex: 1,
-    alignItems: 'center',
-  },
-  statNum: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.primary,
-  },
-  statLbl: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  statDiv: {
-    width: 1,
-    backgroundColor: colors.border,
-  },
-  menuCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 16,
+  },
+  statContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  statIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statText: {
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  statLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 1,
   },
   menuItem: {
     flexDirection: 'row',
@@ -243,12 +295,12 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: '#e8f5e9',
+    backgroundColor: colors.roles.admin.light,
     alignItems: 'center',
     justifyContent: 'center',
   },
   menuTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.textPrimary,
   },
@@ -268,20 +320,60 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontWeight: '700',
   },
-  logoutBtn: {
+  auditRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#fef2f2',
-    borderRadius: 12,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: '#fecaca',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 0.8,
+    borderBottomColor: colors.borderLight,
   },
-  logoutText: {
-    color: '#dc2626',
+  auditIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  auditContent: {
+    flex: 1,
+  },
+  auditAction: {
     fontSize: 13,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  auditMetaRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 2,
+  },
+  auditEntity: {
+    fontSize: 11,
+    color: colors.textSecondary,
+  },
+  auditTime: {
+    fontSize: 10,
+    color: colors.textMuted,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginVertical: 4,
+  },
+  viewAllRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  viewAllText: {
+    fontSize: 12,
     fontWeight: '700',
+    color: colors.primary,
   },
 });
