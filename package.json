@@ -1,8 +1,8 @@
 {
-  "name": "gram-circular",
+  "name": "ecoza",
   "version": "1.0.0",
   "private": true,
-  "description": "GRAM-CIRCULAR - Rural MLP Waste Management System",
+  "description": "ECOZA - Rural MLP Waste Management System",
   "scripts": {
     "dev": "pnpm --parallel -r run dev",
     "dev:web": "pnpm --filter web run dev",

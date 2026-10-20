@@ -17,7 +17,7 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('GRAM-CIRCULAR API')
+    .setTitle('ECOZA API')
     .setDescription('Rural MLP Waste Management System')
     .setVersion('1.0')
     .addTag('villages')
@@ -39,7 +39,7 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
-  console.log(`GRAM-CIRCULAR API running on http://localhost:${port}`);
+  console.log(`ECOZA API running on http://localhost:${port}`);
   console.log(`Swagger docs: http://localhost:${port}/api/docs`);
 }
 
