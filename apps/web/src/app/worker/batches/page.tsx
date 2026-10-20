@@ -91,7 +91,7 @@ export default function WorkerBatchesPage() {
             <CardContent className="flex flex-col items-center p-6 space-y-4">
               <div className="p-4 bg-white rounded-2xl border border-gray-200 shadow-md">
                 <QRCodeSVG
-                  value={`https://gram-circular.in/shared/batches/${selectedBatch.batchNumber}`}
+                  value={`https://ecoza.in/shared/batches/${selectedBatch.batchNumber}`}
                   size={180}
                   level="H"
                   includeMargin={true}

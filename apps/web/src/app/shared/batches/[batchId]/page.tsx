@@ -84,8 +84,8 @@ export default function SharedDigitalPassportPage({
             <Leaf className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-sm font-bold tracking-tight text-gray-900 uppercase">
-              GRAM-CIRCULAR
+            <h1 className="text-base font-bold tracking-tight text-gray-900 lowercase">
+              ecoza
             </h1>
             <p className="text-[11px] text-emerald-800 font-semibold">
               Public Digital Waste Provenance Passport
@@ -130,7 +130,7 @@ export default function SharedDigitalPassportPage({
 
             <div className="p-2 bg-white rounded-xl shadow-md shrink-0">
               <QRCodeSVG
-                value={`https://gram-circular.in/shared/batches/${batch.batchNumber}`}
+                value={`https://ecoza.in/shared/batches/${batch.batchNumber}`}
                 size={85}
                 level="M"
               />

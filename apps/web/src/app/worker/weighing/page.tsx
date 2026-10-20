@@ -253,7 +253,7 @@ export default function WorkerWeighingPage() {
                 <>
                   <div className="p-4 bg-white rounded-2xl border border-gray-200 shadow-md">
                     <QRCodeSVG
-                      value={`https://gram-circular.in/shared/batches/${generatedBatch.batchId}`}
+                      value={`https://ecoza.in/shared/batches/${generatedBatch.batchId}`}
                       size={180}
                       level="H"
                       includeMargin={true}
